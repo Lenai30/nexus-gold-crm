@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useSettings } from "@/hooks/useSettings";
 import { useAuth } from "@/hooks/useAuth";
 import { useLeads } from "@/hooks/useLeads";
@@ -12,7 +12,7 @@ const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const PASSWORD = "nexus2026";
 
 export default function Configuracoes() {
-  const { settings, updateSettings } = useSettings();
+  const { settings, loading, updateSettings } = useSettings();
   const { user } = useAuth();
   const { leads } = useLeads();
   const [empresaNome, setEmpresaNome] = useState(settings?.empresa_nome || "");
@@ -20,7 +20,18 @@ export default function Configuracoes() {
   const [webhookUnlocked, setWebhookUnlocked] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  if (!settings) return <div className="text-muted-foreground">Carregando configurações...</div>;
+  useEffect(() => {
+    setEmpresaNome(settings?.empresa_nome || "");
+  }, [settings?.empresa_nome]);
+
+  if (loading || !settings) return (
+    <div className="grid min-h-[55vh] place-items-center text-muted-foreground">
+      <div className="text-center">
+        <div className="mx-auto mb-4 h-10 w-10 rounded-full border-2 border-gold/30 border-t-gold animate-spin" />
+        <p className="text-sm">Carregando configurações...</p>
+      </div>
+    </div>
+  );
 
   const webhookUrl = `${SUPABASE_URL}/functions/v1/webhook-lead?token=${settings.webhook_token}`;
   const samplePayload = JSON.stringify({
@@ -41,15 +52,15 @@ export default function Configuracoes() {
   };
 
   return (
-    <div className="max-w-4xl">
-      <div className="mb-6">
+    <div className="max-w-5xl">
+      <div className="mb-6 rounded-2xl border border-border bg-card/80 p-6 shadow-sm">
         <h1 className="text-2xl font-bold gradient-gold-text">Configurações</h1>
         <p className="text-sm text-muted-foreground mt-1">Personalize o sistema e configure integrações</p>
       </div>
 
-      <div className="space-y-6">
+      <div className="grid gap-6">
         {/* Identidade */}
-        <section className="bg-card border border-border rounded-xl p-6">
+        <section className="bg-card/90 border border-border rounded-2xl p-6 shadow-sm hover:border-gold/30 transition-colors">
           <h2 className="font-display text-lg font-semibold flex items-center gap-2 mb-4"><Layers className="w-5 h-5 text-gold" />Identidade (Whitelabel)</h2>
           <Label>Nome da Empresa</Label>
           <Input value={empresaNome} onChange={e => setEmpresaNome(e.target.value)} className="mb-2" />
@@ -58,7 +69,7 @@ export default function Configuracoes() {
         </section>
 
         {/* Webhooks */}
-        <section className="bg-card border border-border rounded-xl p-6">
+        <section className="bg-card/90 border border-border rounded-2xl p-6 shadow-sm hover:border-gold/30 transition-colors">
           <h2 className="font-display text-lg font-semibold flex items-center gap-2 mb-4"><Link2 className="w-5 h-5 text-gold" />Webhooks & Integrações</h2>
           {!webhookUnlocked ? (
             <div>
@@ -90,7 +101,7 @@ export default function Configuracoes() {
         </section>
 
         {/* Info */}
-        <section className="bg-card border border-border rounded-xl p-6">
+        <section className="bg-card/90 border border-border rounded-2xl p-6 shadow-sm hover:border-gold/30 transition-colors">
           <h2 className="font-display text-lg font-semibold flex items-center gap-2 mb-4"><Info className="w-5 h-5 text-gold" />Informações do Sistema</h2>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div className="p-4 rounded-lg bg-muted/40">

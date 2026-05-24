@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { LayoutDashboard, Kanban, CalendarClock, BarChart3, Sun, Moon, ChevronLeft, ChevronRight, Gem, Settings, LogOut, Shield } from "lucide-react";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -14,17 +13,28 @@ const NAV = [
   { path: "/configuracoes", label: "Configurações", icon: Settings },
 ];
 
-export default function AppSidebar() {
+export default function AppSidebar({
+  mobileOpen = false,
+  onMobileClose,
+  collapsed,
+  onCollapsedChange,
+}: {
+  mobileOpen?: boolean;
+  onMobileClose?: () => void;
+  collapsed: boolean;
+  onCollapsedChange: (collapsed: boolean) => void;
+}) {
   const { theme, toggleTheme } = useTheme();
   const { signOut, isAdmin } = useAuth();
   const { settings } = useSettings();
   const location = useLocation();
   const navigate = useNavigate();
-  const [collapsed, setCollapsed] = useState(false);
+
+  const sidebarWidth = collapsed ? 72 : 256;
 
   return (
-    <motion.aside animate={{ width: collapsed ? 72 : 256 }} transition={{ duration: 0.3 }}
-      className="fixed left-0 top-0 h-screen z-50 flex flex-col border-r border-border bg-card">
+    <motion.aside animate={{ width: sidebarWidth }} transition={{ duration: 0.25 }}
+      className={`fixed left-0 top-0 h-screen z-50 flex flex-col border-r border-border/80 bg-card/95 backdrop-blur-xl shadow-xl transition-transform duration-300 md:translate-x-0 ${mobileOpen ? "translate-x-0" : "-translate-x-full"}`}>
       <div className="flex items-center gap-3 px-4 h-16 border-b border-border">
         <div className="w-9 h-9 rounded-lg gradient-gold flex items-center justify-center flex-shrink-0">
           <Gem className="w-5 h-5 text-primary-foreground" />
@@ -43,7 +53,7 @@ export default function AppSidebar() {
         {NAV.map((item) => {
           const active = location.pathname === item.path;
           return (
-            <Link key={item.path} to={item.path}
+            <Link key={item.path} to={item.path} onClick={onMobileClose}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group relative ${
                 active ? "bg-primary/10 text-gold" : "text-muted-foreground hover:bg-muted hover:text-foreground"
               }`}>
@@ -55,7 +65,7 @@ export default function AppSidebar() {
           );
         })}
         {isAdmin && (
-          <Link to="/admin" className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${
+          <Link to="/admin" onClick={onMobileClose} className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${
             location.pathname === "/admin" ? "bg-primary/10 text-gold" : "text-muted-foreground hover:bg-muted hover:text-foreground"
           }`}>
             <Shield className="w-5 h-5" />
@@ -74,7 +84,7 @@ export default function AppSidebar() {
           <LogOut className="w-5 h-5" />
           {!collapsed && <span className="text-sm font-medium">Sair</span>}
         </button>
-        <button onClick={() => setCollapsed(!collapsed)} className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-all">
+        <button onClick={() => onCollapsedChange(!collapsed)} className="hidden md:flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-all">
           {collapsed ? <ChevronRight className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
           {!collapsed && <span className="text-sm font-medium">Recolher</span>}
         </button>

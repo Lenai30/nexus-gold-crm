@@ -4,11 +4,11 @@ import { useLeads } from "@/hooks/useLeads";
 export default function SearchBar() {
   const { searchQuery, setSearchQuery, originFilter, setOriginFilter } = useLeads();
   return (
-    <div className="flex items-center gap-4 w-full">
+    <div className="flex items-center gap-2 sm:gap-4 w-full">
       <div className="relative flex-1">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
         <input type="text" placeholder="Buscar leads..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full pl-10 pr-4 py-2 rounded-lg bg-muted border border-border text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-gold transition-all" />
+          className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-card/90 border border-border text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-gold/40 focus:border-gold/50 transition-all shadow-sm" />
       </div>
       <div className="hidden md:flex gap-1 bg-muted rounded-lg p-1">
         {(["all", "paid", "organic"] as const).map((f) => (

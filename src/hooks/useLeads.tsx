@@ -66,8 +66,9 @@ export function LeadsProvider({ children }: { children: ReactNode }) {
         setLoading(false);
       });
 
+    const channelTopic = `leads:${user.id}:${crypto.randomUUID()}`;
     const channel = supabase
-      .channel(`leads:${user.id}`)
+      .channel(channelTopic)
       .on("postgres_changes", { event: "*", schema: "public", table: "leads", filter: `user_id=eq.${user.id}` },
         (payload) => {
           setLeads((curr) => {
@@ -83,6 +84,7 @@ export function LeadsProvider({ children }: { children: ReactNode }) {
   }, [user]);
 
   const moveLead = useCallback(async (id: string, status: Lead["status"]) => {
+    setLeads((curr) => curr.map((lead) => lead.id === id ? { ...lead, status, last_interaction: new Date().toISOString() } : lead));
     const { error } = await supabase.from("leads")
       .update({ status, last_interaction: new Date().toISOString() }).eq("id", id);
     if (error) toast.error(error.message);
@@ -97,13 +99,25 @@ export function LeadsProvider({ children }: { children: ReactNode }) {
   }, [leads]);
 
   const deleteLead = useCallback(async (id: string) => {
+    const previous = leads;
+    setLeads((curr) => curr.filter(l => l.id !== id));
     const { error } = await supabase.from("leads").delete().eq("id", id);
-    if (error) toast.error(error.message); else toast.success("Lead removido");
-  }, []);
+    if (error) { setLeads(previous); toast.error(error.message); } else toast.success("Lead removido");
+  }, [leads]);
 
   const createLead = useCallback(async (lead: Partial<Lead>) => {
     if (!user) return;
-    const { error } = await supabase.from("leads").insert({ ...lead, user_id: user.id } as any);
+    const payload = {
+      ...lead,
+      user_id: user.id,
+      nome: (lead.nome || "").trim(),
+      whatsapp: (lead.whatsapp || "").trim(),
+      origem: lead.origem || "Manual",
+      origem_tag: lead.origem_tag || "organic",
+      status: lead.status || "novos",
+      score: Math.min(5, Math.max(1, Number(lead.score) || 3)),
+    } as any;
+    const { error } = await supabase.from("leads").insert(payload);
     if (error) toast.error(error.message); else toast.success("Lead criado");
   }, [user]);
 
