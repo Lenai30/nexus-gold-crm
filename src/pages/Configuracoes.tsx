@@ -19,6 +19,7 @@ export default function Configuracoes() {
   const { user } = useAuth();
   const { leads } = useLeads();
   const [empresaNome, setEmpresaNome] = useState(settings?.empresa_nome || "");
+  const [aiPauseMin, setAiPauseMin] = useState<number>(settings?.ai_pause_minutes ?? 30);
   const [pwInput, setPwInput] = useState("");
   const [webhookUnlocked, setWebhookUnlocked] = useState(false);
   const [copied, setCopied] = useState(false);
