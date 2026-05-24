@@ -18,12 +18,45 @@ export function useSettings() {
   useEffect(() => {
     if (!user) { setSettings(null); setLoading(false); return; }
     let active = true;
-    supabase.from("settings").select("*").eq("user_id", user.id).maybeSingle()
-      .then(({ data }) => { if (active) { setSettings(data as Settings | null); setLoading(false); } });
+    setLoading(true);
 
-    const ch = supabase.channel(`settings:${user.id}`)
+    const ensureSettings = async () => {
+      const { data, error } = await supabase.from("settings").select("*").eq("user_id", user.id).maybeSingle();
+      if (!active) return;
+
+      if (error) {
+        setSettings(null);
+        setLoading(false);
+        return;
+      }
+
+      if (data) {
+        setSettings(data as Settings);
+        setLoading(false);
+        return;
+      }
+
+      const { data: created } = await supabase
+        .from("settings")
+        .insert({ user_id: user.id, empresa_nome: "Nexus CRM" })
+        .select("*")
+        .maybeSingle();
+
+      if (active) {
+        setSettings(created as Settings | null);
+        setLoading(false);
+      }
+    };
+
+    ensureSettings();
+
+    const channelTopic = `settings:${user.id}:${crypto.randomUUID()}`;
+    const ch = supabase.channel(channelTopic)
       .on("postgres_changes", { event: "*", schema: "public", table: "settings", filter: `user_id=eq.${user.id}` },
-        (p) => setSettings(p.new as Settings))
+        (p) => {
+          if (p.eventType === "DELETE") setSettings(null);
+          else setSettings(p.new as Settings);
+        })
       .subscribe();
     return () => { active = false; supabase.removeChannel(ch); };
   }, [user]);
