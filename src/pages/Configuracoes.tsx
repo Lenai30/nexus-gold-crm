@@ -36,7 +36,8 @@ export default function Configuracoes() {
 
   useEffect(() => {
     setEmpresaNome(settings?.empresa_nome || "");
-  }, [settings?.empresa_nome]);
+    setAiPauseMin(settings?.ai_pause_minutes ?? 30);
+  }, [settings?.empresa_nome, settings?.ai_pause_minutes]);
 
   const loadHooks = useCallback(async () => {
     if (!user) return;
