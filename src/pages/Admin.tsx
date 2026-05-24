@@ -16,12 +16,12 @@ export default function Admin() {
 
   return (
     <div>
-      <div className="mb-6">
+      <div className="mb-6 rounded-2xl border border-border bg-card/80 p-6 shadow-sm">
         <h1 className="text-2xl font-bold gradient-gold-text flex items-center gap-2"><Shield className="w-6 h-6" />Admin</h1>
         <p className="text-sm text-muted-foreground mt-1">Gestão de contas dos clientes</p>
       </div>
 
-      <div className="bg-card border border-border rounded-xl p-6">
+      <div className="premium-card rounded-2xl p-6">
         <h2 className="font-semibold flex items-center gap-2 mb-4"><Users className="w-4 h-4 text-gold" />Contas ({profiles.length})</h2>
         {loading ? <p className="text-muted-foreground text-sm">Carregando...</p> : (
           <div className="space-y-2">
