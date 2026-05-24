@@ -5,7 +5,7 @@ import { useLeads } from "@/hooks/useLeads";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Layers, Link2, Info, Lock, Copy, Check } from "lucide-react";
+import { Layers, Link2, Info, Lock, Copy, Check, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
