@@ -98,6 +98,47 @@ export type Database = {
         }
         Relationships: []
       }
+      messages: {
+        Row: {
+          content: string
+          created_at: string
+          direction: string
+          id: string
+          lead_id: string | null
+          status: string
+          user_id: string
+          whatsapp: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          direction: string
+          id?: string
+          lead_id?: string | null
+          status?: string
+          user_id: string
+          whatsapp: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          direction?: string
+          id?: string
+          lead_id?: string | null
+          status?: string
+          user_id?: string
+          whatsapp?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
@@ -123,6 +164,9 @@ export type Database = {
         Row: {
           created_at: string
           empresa_nome: string | null
+          evolution_api_key: string | null
+          evolution_instance: string | null
+          evolution_url: string | null
           logo_url: string | null
           mensagem_padrao: string | null
           updated_at: string
@@ -132,6 +176,9 @@ export type Database = {
         Insert: {
           created_at?: string
           empresa_nome?: string | null
+          evolution_api_key?: string | null
+          evolution_instance?: string | null
+          evolution_url?: string | null
           logo_url?: string | null
           mensagem_padrao?: string | null
           updated_at?: string
@@ -141,6 +188,9 @@ export type Database = {
         Update: {
           created_at?: string
           empresa_nome?: string | null
+          evolution_api_key?: string | null
+          evolution_instance?: string | null
+          evolution_url?: string | null
           logo_url?: string | null
           mensagem_padrao?: string | null
           updated_at?: string
