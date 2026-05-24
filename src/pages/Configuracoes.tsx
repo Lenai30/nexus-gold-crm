@@ -198,7 +198,7 @@ export default function Configuracoes() {
               <ul className="text-[11px] text-muted-foreground space-y-1 mt-2">
                 <li>• Instância criada automaticamente e isolada por usuário</li>
                 <li>• Webhook configurado para receber mensagens nesta conta</li>
-                <li>• Ignora grupos · sempre online · marca como lida</li>
+                <li>• Ignora grupos · sempre online · não marca como lida</li>
                 <li>• Mensagens recebidas são repassadas aos seus webhooks n8n abaixo</li>
               </ul>
             </div>
