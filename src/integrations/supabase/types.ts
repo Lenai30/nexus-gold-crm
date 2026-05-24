@@ -40,6 +40,7 @@ export type Database = {
       }
       leads: {
         Row: {
+          ai_paused_until: string | null
           anuncio_nome: string | null
           assigned_to: string | null
           campanha_id: string | null
@@ -60,6 +61,7 @@ export type Database = {
           whatsapp: string
         }
         Insert: {
+          ai_paused_until?: string | null
           anuncio_nome?: string | null
           assigned_to?: string | null
           campanha_id?: string | null
@@ -80,6 +82,7 @@ export type Database = {
           whatsapp: string
         }
         Update: {
+          ai_paused_until?: string | null
           anuncio_nome?: string | null
           assigned_to?: string | null
           campanha_id?: string | null
@@ -204,6 +207,7 @@ export type Database = {
       }
       settings: {
         Row: {
+          ai_pause_minutes: number
           created_at: string
           empresa_nome: string | null
           evolution_api_key: string | null
@@ -216,6 +220,7 @@ export type Database = {
           webhook_token: string
         }
         Insert: {
+          ai_pause_minutes?: number
           created_at?: string
           empresa_nome?: string | null
           evolution_api_key?: string | null
@@ -228,6 +233,7 @@ export type Database = {
           webhook_token?: string
         }
         Update: {
+          ai_pause_minutes?: number
           created_at?: string
           empresa_nome?: string | null
           evolution_api_key?: string | null
@@ -357,6 +363,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      transfer_lead_assignment: {
+        Args: { _lead_id: string; _new_assignee: string }
+        Returns: undefined
       }
     }
     Enums: {
