@@ -194,6 +194,35 @@ export default function ChatDrawer({ lead, open, onOpenChange }: Props) {
           </SheetTitle>
         </SheetHeader>
 
+        {/* Assignment bar */}
+        {lead && (
+          <div className="px-4 py-2 border-b border-border bg-muted/30 flex items-center gap-2 text-xs">
+            <UserCheck className={`w-3.5 h-3.5 ${assignee ? "text-success" : "text-muted-foreground"}`} />
+            <span className="text-muted-foreground">Responsável:</span>
+            <span className="font-medium truncate">
+              {assignee
+                ? (team.find(t => t.user_id === assignee)?.display_name || (assignee === user?.id ? "Você" : "Atribuído"))
+                : "Livre — aguardando atendimento"}
+            </span>
+            {(team.length > 0) && (
+              <div className="ml-auto flex items-center gap-1">
+                <ArrowRightLeft className="w-3 h-3 text-muted-foreground" />
+                <Select value={assignee || ""} onValueChange={transferTo} disabled={transferring}>
+                  <SelectTrigger className="h-7 w-[140px] text-xs"><SelectValue placeholder="Transferir..." /></SelectTrigger>
+                  <SelectContent>
+                    {team.map(t => (
+                      <SelectItem key={t.user_id} value={t.user_id} className="text-xs">
+                        {t.display_name} · {t.role_title}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          </div>
+        )}
+
+
         <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-2 bg-muted/30">
           {loading ? (
             <div className="flex items-center justify-center h-32 text-muted-foreground"><Loader2 className="w-5 h-5 animate-spin" /></div>
