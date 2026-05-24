@@ -1,6 +1,13 @@
 import { Lead, useLeads } from "@/hooks/useLeads";
 import { MessageCircle, Calendar, Flame, Trash2, Megaphone } from "lucide-react";
 import { motion } from "framer-motion";
+import { toast } from "sonner";
+
+function toLocalInput(iso: string | null) {
+  const d = iso ? new Date(iso) : new Date(Date.now() + 60 * 60 * 1000);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
 
 function temperature(lastInteraction: string) {
   const hours = (Date.now() - new Date(lastInteraction).getTime()) / 3.6e6;
