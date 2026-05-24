@@ -21,7 +21,7 @@ export default function LeadCard({ lead }: { lead: Lead }) {
       className="bg-card/95 border border-border rounded-2xl px-4 py-5 shadow-sm hover:shadow-gold hover:border-gold/40 transition-all duration-300 cursor-grab active:cursor-grabbing"
       data-lead-id={lead.id}
     >
-      <div className="flex items-start justify-between mb-3">
+      <div className="flex items-start justify-between mb-4">
         <div className="flex-1 min-w-0">
           <h4 className="font-semibold text-sm text-foreground truncate">{lead.nome}</h4>
           <span className={`inline-block mt-1 text-[10px] font-medium px-2 py-0.5 rounded-full ${
