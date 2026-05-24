@@ -71,7 +71,7 @@ export default function LeadCard({ lead }: { lead: Lead }) {
           <MessageCircle className="w-3.5 h-3.5" />Atender
         </button>
         <button onClick={(e)=>e.stopPropagation()}
-          className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-medium bg-gold/10 text-gold hover:bg-gold/20 transition-colors">
+          className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-medium bg-gold/10 text-gold hover:bg-gold/20 transition-colors">
           <Calendar className="w-3.5 h-3.5" />Agendar
         </button>
         <button onClick={(e)=>{e.stopPropagation(); if(confirm("Excluir lead?")) deleteLead(lead.id);}}
