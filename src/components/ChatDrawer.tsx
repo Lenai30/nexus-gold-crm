@@ -16,6 +16,7 @@ interface Message {
   created_at: string;
   media_url?: string | null;
   media_type?: string | null;
+  sender_name?: string | null;
 }
 
 interface Props {
@@ -42,7 +43,7 @@ export default function ChatDrawer({ lead, open, onOpenChange }: Props) {
 
     supabase
       .from("messages")
-      .select("id, lead_id, direction, content, created_at, media_url, media_type")
+      .select("id, lead_id, direction, content, created_at, media_url, media_type, sender_name")
       .eq("lead_id", lead.id)
       .order("created_at", { ascending: true })
       .then(({ data, error }) => {
