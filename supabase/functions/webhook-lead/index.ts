@@ -61,8 +61,18 @@ Deno.serve(async (req) => {
     const status = statusMap[rawStatus] || "novos";
 
     // Parse campaign info - n8n may send campanha_id as a long descriptive string
+    // separated by " | " like: "[Campanha] X | [Conjunto] Y | [Anúncio] Z"
     const rawCampanhaId = body.campanha_id || body.campaign_id || null;
-    const campanhaNome = body.campanha_nome || body.campaign_name || rawCampanhaId || null;
+    let campanhaNome = body.campanha_nome || body.campaign_name || null;
+    let conjuntoNome = body.conjunto_nome || body.adset_name || null;
+    let anuncioNome = body.anuncio_nome || body.ad_name || null;
+
+    if (rawCampanhaId && (!campanhaNome || !conjuntoNome || !anuncioNome)) {
+      const parts = String(rawCampanhaId).split(/\s*\|\s*/).map(p => p.trim()).filter(Boolean);
+      if (!campanhaNome && parts[0]) campanhaNome = parts[0];
+      if (!conjuntoNome && parts[1]) conjuntoNome = parts[1];
+      if (!anuncioNome && parts[2]) anuncioNome = parts.slice(2).join(" | ");
+    }
 
     const lead = {
       user_id: settings.user_id,
@@ -75,8 +85,8 @@ Deno.serve(async (req) => {
       notas: body.notas || body.notes || body.Notes || null,
       campanha_id: rawCampanhaId ? String(rawCampanhaId).slice(0, 500) : null,
       campanha_nome: campanhaNome ? String(campanhaNome).slice(0, 500) : null,
-      conjunto_nome: body.conjunto_nome || body.adset_name || null,
-      anuncio_nome: body.anuncio_nome || body.ad_name || null,
+      conjunto_nome: conjuntoNome ? String(conjuntoNome).slice(0, 500) : null,
+      anuncio_nome: anuncioNome ? String(anuncioNome).slice(0, 500) : null,
       nascimento: (() => {
         const raw = body.nascimento || body.birthday || body.birth || body.data;
         if (!raw) return null;
