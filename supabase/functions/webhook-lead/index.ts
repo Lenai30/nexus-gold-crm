@@ -43,27 +43,48 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json().catch(() => ({}));
-    const nome = body.nome || body.name || body.full_name;
-    const whatsapp = body.whatsapp || body.phone || body.telefone;
+    const nome = body.nome || body.name || body.full_name || body.Name;
+    const whatsapp = body.whatsapp || body.phone || body.telefone || body.Whatsapp;
 
     if (!nome || !whatsapp) {
       return new Response(JSON.stringify({ error: "nome e whatsapp obrigatórios" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
+    // Parse status (accept English/PT variants)
+    const statusMap: Record<string, string> = {
+      "new": "novos", "novo": "novos", "novos": "novos",
+      "negotiation": "negociacao", "negociacao": "negociacao", "negociação": "negociacao",
+      "followup": "followup", "follow-up": "followup", "follow_up": "followup",
+      "posvenda": "posvenda", "pos-venda": "posvenda", "post-sale": "posvenda",
+    };
+    const rawStatus = String(body.status || "novos").toLowerCase().trim();
+    const status = statusMap[rawStatus] || "novos";
+
+    // Parse campaign info - n8n may send campanha_id as a long descriptive string
+    const rawCampanhaId = body.campanha_id || body.campaign_id || null;
+    const campanhaNome = body.campanha_nome || body.campaign_name || rawCampanhaId || null;
+
     const lead = {
       user_id: settings.user_id,
       nome: String(nome).slice(0, 200),
       whatsapp: String(whatsapp).slice(0, 30),
-      origem: body.origem || body.source || "Webhook n8n",
+      origem: body.origem || body.source || body.Origin || body.origin || "Webhook n8n",
       origem_tag: body.origem_tag === "paid" ? "paid" : "organic",
       score: Math.min(5, Math.max(1, parseInt(body.score) || 3)),
-      status: ["novos","negociacao","followup","posvenda"].includes(body.status) ? body.status : "novos",
-      notas: body.notas || body.notes || null,
-      campanha_id: body.campanha_id || body.campaign_id || null,
-      campanha_nome: body.campanha_nome || body.campaign_name || null,
+      status,
+      notas: body.notas || body.notes || body.Notes || null,
+      campanha_id: rawCampanhaId ? String(rawCampanhaId).slice(0, 500) : null,
+      campanha_nome: campanhaNome ? String(campanhaNome).slice(0, 500) : null,
       conjunto_nome: body.conjunto_nome || body.adset_name || null,
       anuncio_nome: body.anuncio_nome || body.ad_name || null,
-      nascimento: body.nascimento || body.birthday || null,
+      nascimento: (() => {
+        const raw = body.nascimento || body.birthday || body.birth || body.data;
+        if (!raw) return null;
+        const s = String(raw).trim();
+        if (!s) return null;
+        const m = s.match(/^\d{4}-\d{2}-\d{2}/);
+        return m ? m[0] : null;
+      })(),
     };
 
     const { data: inserted, error: iErr } = await supabase.from("leads").insert(lead).select().single();

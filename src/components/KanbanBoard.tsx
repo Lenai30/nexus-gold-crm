@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import Sortable from "sortablejs";
 import { COLUMNS, useLeads } from "@/hooks/useLeads";
 import LeadCard from "@/components/LeadCard";
@@ -6,35 +6,45 @@ import { motion } from "framer-motion";
 
 export default function KanbanBoard() {
   const { filteredLeads, moveLead, loading } = useLeads();
-  const columnsRef = useRef<Map<string, HTMLDivElement>>(new Map());
-  const sortablesRef = useRef<Sortable[]>([]);
+  const sortablesRef = useRef<Map<string, Sortable>>(new Map());
+
+  const attachColumn = useCallback((colId: string) => (el: HTMLDivElement | null) => {
+    const existing = sortablesRef.current.get(colId);
+    if (!el) {
+      if (existing) {
+        try { existing.destroy(); } catch {}
+        sortablesRef.current.delete(colId);
+      }
+      return;
+    }
+    if (existing) return; // already initialized
+    const s = Sortable.create(el, {
+      group: "kanban",
+      animation: 200,
+      ghostClass: "opacity-30",
+      handle: "[data-lead-id]",
+      onEnd: (evt) => {
+        const id = evt.item.getAttribute("data-lead-id");
+        const to = (evt.to as HTMLElement).getAttribute("data-column") as any;
+        if (id && to) moveLead(id, to);
+      },
+    });
+    sortablesRef.current.set(colId, s);
+  }, [moveLead]);
 
   useEffect(() => {
-    sortablesRef.current.forEach((s) => s.destroy());
-    sortablesRef.current = [];
-
-    COLUMNS.forEach((col) => {
-      const el = columnsRef.current.get(col.id);
-      if (!el) return;
-      const sortable = Sortable.create(el, {
-        group: "kanban", animation: 200, ghostClass: "opacity-30", handle: "[data-lead-id]",
-        onEnd: (evt) => {
-          const id = evt.item.getAttribute("data-lead-id");
-          const to = evt.to.getAttribute("data-column") as any;
-          if (id && to) moveLead(id, to);
-        },
-      });
-      sortablesRef.current.push(sortable);
-    });
-    return () => { sortablesRef.current.forEach((s) => s.destroy()); };
-  }, [filteredLeads, moveLead]);
+    return () => {
+      sortablesRef.current.forEach((s) => { try { s.destroy(); } catch {} });
+      sortablesRef.current.clear();
+    };
+  }, []);
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
       {COLUMNS.map((col, idx) => {
         const colLeads = filteredLeads.filter((l) => l.status === col.id);
         return (
-          <motion.div key={col.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.1 }} className="flex flex-col">
+          <motion.div key={col.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.05 }} className="flex flex-col">
             <div className="flex items-center justify-between mb-3 px-1">
               <div className="flex items-center gap-2">
                 <span className="text-lg">{col.emoji}</span>
@@ -42,7 +52,7 @@ export default function KanbanBoard() {
               </div>
               <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-gold/15 text-gold">{colLeads.length}</span>
             </div>
-            <div ref={(el) => { if (el) columnsRef.current.set(col.id, el); }} data-column={col.id}
+            <div ref={attachColumn(col.id)} data-column={col.id}
               className="flex-1 space-y-3 min-h-[260px] p-3 rounded-2xl bg-muted/45 border border-border/70 shadow-inner">
               {colLeads.map((lead) => <LeadCard key={lead.id} lead={lead} />)}
               {colLeads.length === 0 && (
