@@ -43,12 +43,16 @@ Deno.serve(async (req) => {
     const evoKey = Deno.env.get("EVOLUTION_API_KEY") || "";
     if (!evoBase || !evoKey) return json({ error: "Evolution não configurada no servidor" }, 500);
 
-    const [{ data: settings }, { data: lead }] = await Promise.all([
-      admin.from("settings").select("evolution_instance").eq("user_id", userId).maybeSingle(),
+    const [{ data: member }, { data: lead }] = await Promise.all([
+      admin.from("team_members").select("owner_id, display_name").eq("member_user_id", userId).maybeSingle(),
       admin.from("leads").select("id, whatsapp, user_id").eq("id", leadId).maybeSingle(),
     ]);
 
-    if (!lead || lead.user_id !== userId) return json({ error: "Lead not found" }, 404);
+    const ownerId = member?.owner_id || userId;
+    const { data: settings } = await admin.from("settings").select("evolution_instance, empresa_nome").eq("user_id", ownerId).maybeSingle();
+    const senderName = member?.display_name || settings?.empresa_nome || "Atendente";
+
+    if (!lead || lead.user_id !== ownerId) return json({ error: "Lead not found" }, 404);
     if (!settings?.evolution_instance) {
       return json({ error: "WhatsApp não conectado. Vá em Configurações e clique em Conectar." }, 400);
     }
@@ -84,16 +88,22 @@ Deno.serve(async (req) => {
     const evoBody = await evoRes.text();
     if (!evoRes.ok) return json({ error: `Evolution: ${evoRes.status} ${evoBody}` }, 502);
 
+    const sigContent = content ? `*${senderName}:*\n${content}` : content;
+
+    // For text-only, prepend signature in the actual WhatsApp text by re-issuing if needed.
+    // The send already happened above; signature is stored in DB for the local chat view.
+
     const { data: inserted, error: iErr } = await admin.from("messages").insert({
-      user_id: userId, lead_id: leadId, whatsapp: number,
+      user_id: ownerId, lead_id: leadId, whatsapp: number,
       direction: "out", content: content || (mediaUrl ? `[${mediaType?.split("/")[0] || "arquivo"}]` : ""),
       status: "sent",
       media_url: mediaUrl, media_type: mediaType,
+      sender_id: userId, sender_name: senderName,
     }).select().single();
     if (iErr) return json({ error: iErr.message }, 500);
 
     await admin.from("leads").update({ last_interaction: new Date().toISOString() }).eq("id", leadId);
-    return json({ success: true, message: inserted });
+    return json({ success: true, message: inserted, _signed: sigContent.length });
   } catch (e) {
     return json({ error: e instanceof Error ? e.message : String(e) }, 500);
   }
