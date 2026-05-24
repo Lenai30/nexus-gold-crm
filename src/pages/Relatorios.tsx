@@ -28,7 +28,7 @@ export default function Relatorios() {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
-          className="bg-card border border-border rounded-2xl p-8 w-full max-w-sm text-center">
+          className="premium-card rounded-2xl p-8 w-full max-w-sm text-center">
           <div className="w-16 h-16 rounded-2xl bg-gold/10 flex items-center justify-center mx-auto mb-4">
             <Lock className="w-8 h-8 text-gold" />
           </div>
@@ -46,7 +46,7 @@ export default function Relatorios() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-6 rounded-2xl border border-border bg-card/80 p-6 shadow-sm">
         <div>
           <h1 className="text-2xl font-bold gradient-gold-text">Relatórios</h1>
           <p className="text-sm text-muted-foreground mt-1">Métricas e performance do funil</p>
@@ -59,7 +59,7 @@ export default function Relatorios() {
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-8">
         {kpis.map((kpi, i) => (
           <motion.div key={kpi.label} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}
-            className="bg-card border border-border rounded-xl p-5 hover:shadow-gold/10 hover:border-gold/30 transition-all">
+            className="premium-card rounded-2xl p-5 hover:shadow-gold/10 hover:border-gold/30 transition-all">
             <div className="w-10 h-10 rounded-lg bg-gold/10 flex items-center justify-center mb-3">
               <kpi.icon className="w-5 h-5 text-gold" />
             </div>
@@ -70,7 +70,7 @@ export default function Relatorios() {
         ))}
       </div>
 
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="bg-card border border-border rounded-xl p-6">
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="premium-card rounded-2xl p-6">
         <h2 className="font-display text-lg font-semibold text-foreground mb-6">Leads por Etapa</h2>
         <ResponsiveContainer width="100%" height={300}>
           <BarChart data={chartData}>
