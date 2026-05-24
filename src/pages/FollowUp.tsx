@@ -47,7 +47,7 @@ export default function FollowUp() {
     const alvos = leads.filter(l => selected.has(l.id));
     alvos.forEach((l, i) => {
       setTimeout(() => {
-        const msg = mensagem.replaceAll("{nome}", l.nome);
+        const msg = mensagem.split("{nome}").join(l.nome);
         const phone = l.whatsapp.replace(/\D/g, "");
         window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg + (imagemUrl ? "\n\n" + imagemUrl : ""))}`, "_blank");
       }, i * 800);
