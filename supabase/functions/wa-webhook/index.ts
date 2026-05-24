@@ -38,43 +38,33 @@ Deno.serve(async (req) => {
 
     const rawPayload = await req.json().catch(() => ({}));
 
-    // FAN-OUT to user's n8n webhooks (fire-and-forget, non-blocking)
-    (async () => {
-      const { data: hooks } = await supabase
-        .from("n8n_webhooks")
-        .select("id, url")
-        .eq("user_id", userId)
-        .eq("active", true);
-      await Promise.allSettled(
-        (hooks || []).map((h) =>
-          fetch(h.url, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(rawPayload),
-          }).catch(() => null),
-        ),
-      );
-    })();
-
     // Parse and store messages for internal chat
     const data = (rawPayload as any)?.data || rawPayload;
     const items: any[] = Array.isArray(data?.messages) ? data.messages : Array.isArray(data) ? data : [data];
 
-    const { data: leads } = await supabase.from("leads").select("id, whatsapp").eq("user_id", userId);
+    const { data: leads } = await supabase.from("leads")
+      .select("id, whatsapp, assigned_to, ai_paused_until, status").eq("user_id", userId);
 
+    // Build per-message context (so n8n can decide whether AI should respond)
+    const matchedLead = (phone: string) => {
+      const tail = phone.slice(-10);
+      return (leads || []).find((l) => String(l.whatsapp).replace(/\D/g, "").endsWith(tail));
+    };
+
+    let firstContext: any = null;
     let processed = 0;
     for (const item of items) {
       if (!item) continue;
       const fromMe = item?.key?.fromMe === true;
       if (fromMe) continue;
       const remoteJid: string = item?.key?.remoteJid || item?.remoteJid || item?.from || "";
-      if (remoteJid.includes("@g.us")) continue; // ignore groups
+      if (remoteJid.includes("@g.us")) continue;
       const phone = normalizePhone(remoteJid.split("@")[0] || "");
       const text = extractText(item);
       if (!phone || !text) continue;
 
-      const tail = phone.slice(-10);
-      const lead = (leads || []).find((l) => normalizePhone(l.whatsapp).endsWith(tail));
+      const lead = matchedLead(phone);
+      const aiPaused = !!(lead?.ai_paused_until && new Date(lead.ai_paused_until).getTime() > Date.now());
 
       await supabase.from("messages").insert({
         user_id: userId,
@@ -87,8 +77,36 @@ Deno.serve(async (req) => {
       if (lead?.id) {
         await supabase.from("leads").update({ last_interaction: new Date().toISOString() }).eq("id", lead.id);
       }
+      if (!firstContext) {
+        firstContext = {
+          lead_id: lead?.id || null,
+          status: lead?.status || null,
+          assigned_to: lead?.assigned_to || null,
+          ai_paused: aiPaused,
+          ai_paused_until: lead?.ai_paused_until || null,
+        };
+      }
       processed++;
     }
+
+    // FAN-OUT to user's n8n webhooks with enriched context (fire-and-forget)
+    (async () => {
+      const { data: hooks } = await supabase
+        .from("n8n_webhooks")
+        .select("id, url")
+        .eq("user_id", userId)
+        .eq("active", true);
+      const enrichedPayload = { ...(rawPayload as any), crm_context: firstContext };
+      await Promise.allSettled(
+        (hooks || []).map((h) =>
+          fetch(h.url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(enrichedPayload),
+          }).catch(() => null),
+        ),
+      );
+    })();
 
     return json({ success: true, processed });
   } catch (e) {
