@@ -64,13 +64,13 @@ export default function FollowUp() {
 
   return (
     <div>
-      <div className="mb-6">
+      <div className="mb-6 rounded-2xl border border-border bg-card/80 p-6 shadow-sm">
         <h1 className="text-2xl font-bold gradient-gold-text">Follow-up & Campanhas</h1>
         <p className="text-sm text-muted-foreground mt-1">Gerencie retornos, aniversariantes e dispare campanhas</p>
       </div>
 
       <Tabs defaultValue="agenda">
-        <TabsList className="mb-6">
+        <TabsList className="mb-6 h-auto flex-wrap justify-start rounded-xl bg-muted/70 p-1">
           <TabsTrigger value="agenda"><CalendarClock className="w-4 h-4 mr-2" />Agenda</TabsTrigger>
           <TabsTrigger value="aniversariantes"><Cake className="w-4 h-4 mr-2" />Aniversariantes</TabsTrigger>
           <TabsTrigger value="campanha"><Send className="w-4 h-4 mr-2" />Campanha Manual</TabsTrigger>
@@ -87,7 +87,7 @@ export default function FollowUp() {
             const od = overdue(lead);
             return (
               <motion.div key={lead.id} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.05 }}
-                className={`flex items-center gap-4 bg-card border rounded-xl p-4 ${od ? "border-danger/50" : "border-border hover:border-gold/30"}`}>
+                className={`flex items-center gap-4 bg-card/90 border rounded-2xl p-4 shadow-sm ${od ? "border-danger/50" : "border-border hover:border-gold/30"}`}>
                 <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${od ? "bg-danger/10" : "bg-gold/10"}`}>
                   {od ? <AlertTriangle className="w-5 h-5 text-danger animate-pulse" /> : <CalendarClock className="w-5 h-5 text-gold" />}
                 </div>
@@ -115,7 +115,7 @@ export default function FollowUp() {
             </div>
           )}
           {aniversariantes.map(l => (
-            <div key={l.id} className="flex items-center gap-4 bg-card border border-border rounded-xl p-4">
+            <div key={l.id} className="flex items-center gap-4 bg-card/90 border border-border rounded-2xl p-4 shadow-sm">
               <div className="w-10 h-10 rounded-lg bg-gold/10 flex items-center justify-center"><Cake className="w-5 h-5 text-gold" /></div>
               <div className="flex-1">
                 <h4 className="font-semibold text-sm">{l.nome}</h4>
@@ -128,7 +128,7 @@ export default function FollowUp() {
 
         <TabsContent value="campanha">
           <div className="grid md:grid-cols-2 gap-4">
-            <div className="bg-card border border-border rounded-xl p-5">
+            <div className="bg-card/90 border border-border rounded-2xl p-5 shadow-sm">
               <h3 className="font-semibold mb-4 flex items-center gap-2"><Phone className="w-4 h-4 text-gold" />Selecionar Leads</h3>
               <label className="flex items-center gap-2 mb-3 text-sm">
                 <Checkbox checked={selected.size === leads.length && leads.length > 0} onCheckedChange={(c) => toggleAll(!!c)} />
@@ -145,7 +145,7 @@ export default function FollowUp() {
               </div>
             </div>
 
-            <div className="bg-card border border-border rounded-xl p-5 space-y-4">
+            <div className="bg-card/90 border border-border rounded-2xl p-5 space-y-4 shadow-sm">
               <h3 className="font-semibold flex items-center gap-2"><MessageCircle className="w-4 h-4 text-gold" />Mensagem & Imagem</h3>
               <div>
                 <Label>Mensagem</Label>
