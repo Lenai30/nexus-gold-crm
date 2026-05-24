@@ -6,6 +6,8 @@ import { toast } from "sonner";
 export interface Lead {
   id: string;
   user_id: string;
+  assigned_to: string | null;
+  ai_paused_until: string | null;
   nome: string;
   whatsapp: string;
   origem: string;

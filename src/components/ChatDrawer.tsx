@@ -3,10 +3,11 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { Lead } from "@/hooks/useLeads";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { Send, Loader2, MessageCircle, Smile, Paperclip, X, FileText } from "lucide-react";
+import { Send, Loader2, MessageCircle, Smile, Paperclip, X, FileText, UserCheck, ArrowRightLeft } from "lucide-react";
 import { toast } from "sonner";
 import EmojiPicker, { EmojiStyle, Theme } from "emoji-picker-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface Message {
   id: string;
@@ -25,6 +26,8 @@ interface Props {
   onOpenChange: (open: boolean) => void;
 }
 
+interface TeamOption { user_id: string; display_name: string; role_title: string; }
+
 export default function ChatDrawer({ lead, open, onOpenChange }: Props) {
   const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
@@ -33,8 +36,46 @@ export default function ChatDrawer({ lead, open, onOpenChange }: Props) {
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [pendingFile, setPendingFile] = useState<{ url: string; type: string; name: string; preview: string } | null>(null);
+  const [team, setTeam] = useState<TeamOption[]>([]);
+  const [assignee, setAssignee] = useState<string | null>(lead?.assigned_to || null);
+  const [transferring, setTransferring] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  // Sync assignee from lead prop (lead may be updated via realtime by parent)
+  useEffect(() => { setAssignee(lead?.assigned_to || null); }, [lead?.assigned_to]);
+
+  // Load team options (org members) — only if you can transfer
+  useEffect(() => {
+    if (!open || !lead || !user) return;
+    const canTransfer = !assignee || assignee === user.id || lead.user_id === user.id;
+    if (!canTransfer) { setTeam([]); return; }
+    (async () => {
+      const ownerId = lead.user_id;
+      const { data: members } = await supabase.from("team_members")
+        .select("member_user_id, display_name, role_title")
+        .eq("owner_id", ownerId).eq("active", true);
+      const { data: ownerProfile } = await supabase.from("profiles")
+        .select("id, empresa_nome").eq("id", ownerId).maybeSingle();
+      const list: TeamOption[] = [
+        { user_id: ownerId, display_name: (ownerProfile as any)?.empresa_nome || "Dono", role_title: "Dono" },
+        ...((members || []).map((m: any) => ({ user_id: m.member_user_id, display_name: m.display_name, role_title: m.role_title }))),
+      ];
+      setTeam(list);
+    })();
+  }, [open, lead, user, assignee]);
+
+  const transferTo = async (newAssignee: string) => {
+    if (!lead || newAssignee === assignee) return;
+    setTransferring(true);
+    const { error } = await supabase.rpc("transfer_lead_assignment", {
+      _lead_id: lead.id, _new_assignee: newAssignee,
+    });
+    setTransferring(false);
+    if (error) { toast.error(error.message); return; }
+    setAssignee(newAssignee);
+    toast.success("Conversa transferida");
+  };
 
   useEffect(() => {
     if (!open || !lead || !user) return;
@@ -152,6 +193,35 @@ export default function ChatDrawer({ lead, open, onOpenChange }: Props) {
             </div>
           </SheetTitle>
         </SheetHeader>
+
+        {/* Assignment bar */}
+        {lead && (
+          <div className="px-4 py-2 border-b border-border bg-muted/30 flex items-center gap-2 text-xs">
+            <UserCheck className={`w-3.5 h-3.5 ${assignee ? "text-success" : "text-muted-foreground"}`} />
+            <span className="text-muted-foreground">Responsável:</span>
+            <span className="font-medium truncate">
+              {assignee
+                ? (team.find(t => t.user_id === assignee)?.display_name || (assignee === user?.id ? "Você" : "Atribuído"))
+                : "Livre — aguardando atendimento"}
+            </span>
+            {(team.length > 0) && (
+              <div className="ml-auto flex items-center gap-1">
+                <ArrowRightLeft className="w-3 h-3 text-muted-foreground" />
+                <Select value={assignee || ""} onValueChange={transferTo} disabled={transferring}>
+                  <SelectTrigger className="h-7 w-[140px] text-xs"><SelectValue placeholder="Transferir..." /></SelectTrigger>
+                  <SelectContent>
+                    {team.map(t => (
+                      <SelectItem key={t.user_id} value={t.user_id} className="text-xs">
+                        {t.display_name} · {t.role_title}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          </div>
+        )}
+
 
         <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-2 bg-muted/30">
           {loading ? (
