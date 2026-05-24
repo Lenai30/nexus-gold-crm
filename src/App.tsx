@@ -14,6 +14,7 @@ import Pipeline from "@/pages/Pipeline";
 import FollowUp from "@/pages/FollowUp";
 import Relatorios from "@/pages/Relatorios";
 import Configuracoes from "@/pages/Configuracoes";
+import Equipe from "@/pages/Equipe";
 import Admin from "@/pages/Admin";
 import NotFound from "./pages/NotFound";
 
@@ -38,6 +39,7 @@ const App = () => (
                         <Route path="/pipeline" element={<Pipeline />} />
                         <Route path="/followup" element={<FollowUp />} />
                         <Route path="/relatorios" element={<Relatorios />} />
+                        <Route path="/equipe" element={<Equipe />} />
                         <Route path="/configuracoes" element={<Configuracoes />} />
                         <Route path="/admin" element={<ProtectedRoute requireAdmin><Admin /></ProtectedRoute>} />
                         <Route path="*" element={<NotFound />} />
