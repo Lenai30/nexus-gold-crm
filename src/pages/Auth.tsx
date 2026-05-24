@@ -1,37 +1,52 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Gem } from "lucide-react";
+import { Gem, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 
 export default function Auth() {
   const navigate = useNavigate();
+  const [params] = useSearchParams();
+  const inviteToken = params.get("invite");
   const { user, loading } = useAuth();
   const [submitting, setSubmitting] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [empresa, setEmpresa] = useState("");
 
-  useEffect(() => { if (!loading && user) navigate("/", { replace: true }); }, [user, loading, navigate]);
+  const acceptInviteIfAny = async () => {
+    if (!inviteToken) return;
+    const { data, error } = await supabase.rpc("accept_team_invite", { _token: inviteToken });
+    if (error) { toast.error(error.message); return; }
+    if ((data as any)?.error) { toast.error("Convite: " + (data as any).error); return; }
+    toast.success("Bem-vindo à equipe!");
+  };
+
+  useEffect(() => {
+    if (!loading && user) {
+      acceptInviteIfAny().finally(() => navigate("/", { replace: true }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, loading]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault(); setSubmitting(true);
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     setSubmitting(false);
-    if (error) toast.error(error.message); else navigate("/");
+    if (error) toast.error(error.message);
   };
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault(); setSubmitting(true);
     const { error } = await supabase.auth.signUp({
       email, password,
-      options: { emailRedirectTo: window.location.origin, data: { empresa_nome: empresa } },
+      options: { emailRedirectTo: window.location.origin + (inviteToken ? `/auth?invite=${inviteToken}` : ""), data: { empresa_nome: empresa || "Funcionário" } },
     });
     setSubmitting(false);
     if (error) toast.error(error.message);
@@ -39,7 +54,7 @@ export default function Auth() {
   };
 
   const handleGoogle = async () => {
-    const r = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin });
+    const r = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin + (inviteToken ? `/auth?invite=${inviteToken}` : "") });
     if (r.error) toast.error("Erro Google: " + r.error.message);
   };
 
@@ -54,8 +69,15 @@ export default function Auth() {
           <p className="text-sm text-muted-foreground mt-1">Gold Premium</p>
         </div>
 
+        {inviteToken && (
+          <div className="mb-4 p-3 rounded-xl bg-gold/10 border border-gold/30 flex items-center gap-2 text-sm">
+            <UserPlus className="w-4 h-4 text-gold shrink-0" />
+            <span>Você foi convidado para uma equipe. Entre ou cadastre-se para aceitar.</span>
+          </div>
+        )}
+
         <div className="bg-card border border-border rounded-2xl p-6 shadow-lg">
-          <Tabs defaultValue="login">
+          <Tabs defaultValue={inviteToken ? "signup" : "login"}>
             <TabsList className="grid grid-cols-2 mb-6 w-full">
               <TabsTrigger value="login">Entrar</TabsTrigger>
               <TabsTrigger value="signup">Cadastrar</TabsTrigger>
@@ -71,7 +93,7 @@ export default function Auth() {
 
             <TabsContent value="signup">
               <form onSubmit={handleSignup} className="space-y-4">
-                <div><Label>Nome da empresa</Label><Input required value={empresa} onChange={e => setEmpresa(e.target.value)} placeholder="Minha Empresa" /></div>
+                {!inviteToken && <div><Label>Nome da empresa</Label><Input required value={empresa} onChange={e => setEmpresa(e.target.value)} placeholder="Minha Empresa" /></div>}
                 <div><Label>Email</Label><Input type="email" required value={email} onChange={e => setEmail(e.target.value)} /></div>
                 <div><Label>Senha</Label><Input type="password" required minLength={6} value={password} onChange={e => setPassword(e.target.value)} /></div>
                 <Button type="submit" disabled={submitting} className="w-full gradient-gold text-primary-foreground">Criar conta</Button>

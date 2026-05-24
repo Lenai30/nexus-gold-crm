@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { LayoutDashboard, Kanban, CalendarClock, BarChart3, Sun, Moon, ChevronLeft, ChevronRight, Gem, Settings, LogOut, Shield } from "lucide-react";
+import { LayoutDashboard, Kanban, CalendarClock, BarChart3, Sun, Moon, ChevronLeft, ChevronRight, Gem, Settings, LogOut, Shield, Users } from "lucide-react";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useAuth } from "@/hooks/useAuth";
 import { useSettings } from "@/hooks/useSettings";
@@ -9,6 +9,7 @@ const NAV = [
   { path: "/", label: "Dashboard", icon: LayoutDashboard },
   { path: "/pipeline", label: "Pipeline", icon: Kanban },
   { path: "/followup", label: "Follow-up", icon: CalendarClock },
+  { path: "/equipe", label: "Equipe", icon: Users },
   { path: "/relatorios", label: "Relatórios", icon: BarChart3, locked: true },
   { path: "/configuracoes", label: "Configurações", icon: Settings },
 ];

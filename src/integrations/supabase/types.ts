@@ -41,6 +41,7 @@ export type Database = {
       leads: {
         Row: {
           anuncio_nome: string | null
+          assigned_to: string | null
           campanha_id: string | null
           campanha_nome: string | null
           conjunto_nome: string | null
@@ -60,6 +61,7 @@ export type Database = {
         }
         Insert: {
           anuncio_nome?: string | null
+          assigned_to?: string | null
           campanha_id?: string | null
           campanha_nome?: string | null
           conjunto_nome?: string | null
@@ -79,6 +81,7 @@ export type Database = {
         }
         Update: {
           anuncio_nome?: string | null
+          assigned_to?: string | null
           campanha_id?: string | null
           campanha_nome?: string | null
           conjunto_nome?: string | null
@@ -107,6 +110,8 @@ export type Database = {
           lead_id: string | null
           media_type: string | null
           media_url: string | null
+          sender_id: string | null
+          sender_name: string | null
           status: string
           user_id: string
           whatsapp: string
@@ -119,6 +124,8 @@ export type Database = {
           lead_id?: string | null
           media_type?: string | null
           media_url?: string | null
+          sender_id?: string | null
+          sender_name?: string | null
           status?: string
           user_id: string
           whatsapp: string
@@ -131,6 +138,8 @@ export type Database = {
           lead_id?: string | null
           media_type?: string | null
           media_url?: string | null
+          sender_id?: string | null
+          sender_name?: string | null
           status?: string
           user_id?: string
           whatsapp?: string
@@ -232,6 +241,87 @@ export type Database = {
         }
         Relationships: []
       }
+      team_invites: {
+        Row: {
+          capabilities: string[]
+          created_at: string
+          display_name: string
+          email: string
+          expires_at: string
+          id: string
+          owner_id: string
+          role_title: string
+          sector: string
+          token: string
+          used_at: string | null
+          used_by: string | null
+        }
+        Insert: {
+          capabilities?: string[]
+          created_at?: string
+          display_name: string
+          email: string
+          expires_at?: string
+          id?: string
+          owner_id: string
+          role_title?: string
+          sector?: string
+          token?: string
+          used_at?: string | null
+          used_by?: string | null
+        }
+        Update: {
+          capabilities?: string[]
+          created_at?: string
+          display_name?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          owner_id?: string
+          role_title?: string
+          sector?: string
+          token?: string
+          used_at?: string | null
+          used_by?: string | null
+        }
+        Relationships: []
+      }
+      team_members: {
+        Row: {
+          active: boolean
+          capabilities: string[]
+          created_at: string
+          display_name: string
+          id: string
+          member_user_id: string
+          owner_id: string
+          role_title: string
+          sector: string
+        }
+        Insert: {
+          active?: boolean
+          capabilities?: string[]
+          created_at?: string
+          display_name: string
+          id?: string
+          member_user_id: string
+          owner_id: string
+          role_title?: string
+          sector?: string
+        }
+        Update: {
+          active?: boolean
+          capabilities?: string[]
+          created_at?: string
+          display_name?: string
+          id?: string
+          member_user_id?: string
+          owner_id?: string
+          role_title?: string
+          sector?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string
@@ -255,6 +345,12 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      accept_team_invite: {
+        Args: { _display_name?: string; _token: string }
+        Returns: Json
+      }
+      current_org_owner: { Args: { _uid: string }; Returns: string }
+      has_capability: { Args: { _cap: string; _uid: string }; Returns: boolean }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
