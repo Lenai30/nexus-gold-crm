@@ -5,7 +5,7 @@ import { useLeads } from "@/hooks/useLeads";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Layers, Link2, Info, Lock, Copy, Check } from "lucide-react";
+import { Layers, Link2, Info, Lock, Copy, Check, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
@@ -19,10 +19,18 @@ export default function Configuracoes() {
   const [pwInput, setPwInput] = useState("");
   const [webhookUnlocked, setWebhookUnlocked] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [waCopied, setWaCopied] = useState(false);
+  const [evoUrl, setEvoUrl] = useState("");
+  const [evoKey, setEvoKey] = useState("");
+  const [evoInstance, setEvoInstance] = useState("");
+  const [savingEvo, setSavingEvo] = useState(false);
 
   useEffect(() => {
     setEmpresaNome(settings?.empresa_nome || "");
-  }, [settings?.empresa_nome]);
+    setEvoUrl(settings?.evolution_url || "");
+    setEvoKey(settings?.evolution_api_key || "");
+    setEvoInstance(settings?.evolution_instance || "");
+  }, [settings?.empresa_nome, settings?.evolution_url, settings?.evolution_api_key, settings?.evolution_instance]);
 
   if (loading || !settings) return (
     <div className="grid min-h-[55vh] place-items-center text-muted-foreground">
@@ -49,6 +57,24 @@ export default function Configuracoes() {
     navigator.clipboard.writeText(webhookUrl);
     setCopied(true); setTimeout(() => setCopied(false), 2000);
     toast.success("URL copiada");
+  };
+
+  const waWebhookUrl = `${SUPABASE_URL}/functions/v1/wa-webhook?token=${settings.webhook_token}`;
+  const copyWaUrl = () => {
+    navigator.clipboard.writeText(waWebhookUrl);
+    setWaCopied(true); setTimeout(() => setWaCopied(false), 2000);
+    toast.success("URL copiada");
+  };
+
+  const saveEvolution = async () => {
+    setSavingEvo(true);
+    const { error } = await updateSettings({
+      evolution_url: evoUrl.trim() || null,
+      evolution_api_key: evoKey.trim() || null,
+      evolution_instance: evoInstance.trim() || null,
+    } as any);
+    setSavingEvo(false);
+    if (error) toast.error(error.message); else toast.success("WhatsApp configurado");
   };
 
   return (
@@ -99,6 +125,39 @@ export default function Configuracoes() {
             </div>
           )}
         </section>
+
+        {/* WhatsApp Evolution */}
+        <section className="bg-card/90 border border-border rounded-2xl p-6 shadow-sm hover:border-gold/30 transition-colors">
+          <h2 className="font-display text-lg font-semibold flex items-center gap-2 mb-1"><MessageCircle className="w-5 h-5 text-gold" />WhatsApp (Evolution API)</h2>
+          <p className="text-xs text-muted-foreground mb-4">Configure sua instância da Evolution API para enviar e receber mensagens dentro do CRM.</p>
+          <div className="grid gap-3">
+            <div>
+              <Label>URL da Evolution</Label>
+              <Input value={evoUrl} onChange={e => setEvoUrl(e.target.value)} placeholder="https://evo.seudominio.com" className="font-mono text-xs" />
+            </div>
+            <div>
+              <Label>API Key</Label>
+              <Input type="password" value={evoKey} onChange={e => setEvoKey(e.target.value)} placeholder="sua chave da Evolution" className="font-mono text-xs" />
+            </div>
+            <div>
+              <Label>Nome da Instância</Label>
+              <Input value={evoInstance} onChange={e => setEvoInstance(e.target.value)} placeholder="ex: loja-crm" className="font-mono text-xs" />
+            </div>
+            <Button onClick={saveEvolution} disabled={savingEvo} className="gradient-gold text-primary-foreground w-fit">
+              {savingEvo ? "Salvando..." : "Salvar Integração"}
+            </Button>
+
+            <div className="mt-4 pt-4 border-t border-border">
+              <Label>URL de Webhook (cole no painel da Evolution)</Label>
+              <div className="flex gap-2">
+                <Input readOnly value={waWebhookUrl} className="font-mono text-xs" />
+                <Button onClick={copyWaUrl} variant="outline">{waCopied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}</Button>
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">No painel da Evolution → Webhook → ative o evento <code className="bg-muted px-1 rounded">MESSAGES_UPSERT</code> apontando para esta URL.</p>
+            </div>
+          </div>
+        </section>
+
 
         {/* Info */}
         <section className="bg-card/90 border border-border rounded-2xl p-6 shadow-sm hover:border-gold/30 transition-colors">

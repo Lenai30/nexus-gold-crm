@@ -1,7 +1,9 @@
+import { useState } from "react";
 import { Lead, useLeads } from "@/hooks/useLeads";
 import { MessageCircle, Calendar, Flame, Trash2, Megaphone } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
+import ChatDrawer from "./ChatDrawer";
 
 function toLocalInput(iso: string | null) {
   const d = iso ? new Date(iso) : new Date(Date.now() + 60 * 60 * 1000);
@@ -18,8 +20,9 @@ function temperature(lastInteraction: string) {
 }
 
 export default function LeadCard({ lead }: { lead: Lead }) {
-  const { attendLead, deleteLead, updateLead } = useLeads();
+  const { deleteLead, updateLead } = useLeads();
   const temp = temperature(lead.last_interaction);
+  const [chatOpen, setChatOpen] = useState(false);
 
   const handleAgendar = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -78,7 +81,7 @@ export default function LeadCard({ lead }: { lead: Lead }) {
       </div>
 
       <div className="flex gap-1.5 pt-2.5 mt-auto border-t border-border">
-        <button onClick={(e)=>{e.stopPropagation(); attendLead(lead.id);}}
+        <button onClick={(e)=>{e.stopPropagation(); setChatOpen(true);}}
           className="flex-1 flex items-center justify-center gap-1 py-2 rounded-lg text-[11px] font-medium bg-success/10 text-success hover:bg-success/20 transition-colors">
           <MessageCircle className="w-3.5 h-3.5" />Atender
         </button>
@@ -91,6 +94,7 @@ export default function LeadCard({ lead }: { lead: Lead }) {
           <Trash2 className="w-3.5 h-3.5" />
         </button>
       </div>
+      <ChatDrawer lead={lead} open={chatOpen} onOpenChange={setChatOpen} />
     </motion.div>
   );
 }
