@@ -14,16 +14,174 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      campanhas_log: {
+        Row: {
+          created_at: string
+          id: string
+          mensagem: string
+          qtd_leads: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          mensagem: string
+          qtd_leads?: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          mensagem?: string
+          qtd_leads?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      leads: {
+        Row: {
+          anuncio_nome: string | null
+          campanha_id: string | null
+          campanha_nome: string | null
+          conjunto_nome: string | null
+          created_at: string
+          id: string
+          last_interaction: string
+          nascimento: string | null
+          nome: string
+          notas: string | null
+          origem: string | null
+          origem_tag: string
+          prox_acao: string | null
+          score: number
+          status: string
+          user_id: string
+          whatsapp: string
+        }
+        Insert: {
+          anuncio_nome?: string | null
+          campanha_id?: string | null
+          campanha_nome?: string | null
+          conjunto_nome?: string | null
+          created_at?: string
+          id?: string
+          last_interaction?: string
+          nascimento?: string | null
+          nome: string
+          notas?: string | null
+          origem?: string | null
+          origem_tag?: string
+          prox_acao?: string | null
+          score?: number
+          status?: string
+          user_id: string
+          whatsapp: string
+        }
+        Update: {
+          anuncio_nome?: string | null
+          campanha_id?: string | null
+          campanha_nome?: string | null
+          conjunto_nome?: string | null
+          created_at?: string
+          id?: string
+          last_interaction?: string
+          nascimento?: string | null
+          nome?: string
+          notas?: string | null
+          origem?: string | null
+          origem_tag?: string
+          prox_acao?: string | null
+          score?: number
+          status?: string
+          user_id?: string
+          whatsapp?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string | null
+          empresa_nome: string | null
+          id: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          empresa_nome?: string | null
+          id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          empresa_nome?: string | null
+          id?: string
+        }
+        Relationships: []
+      }
+      settings: {
+        Row: {
+          created_at: string
+          empresa_nome: string | null
+          logo_url: string | null
+          mensagem_padrao: string | null
+          updated_at: string
+          user_id: string
+          webhook_token: string
+        }
+        Insert: {
+          created_at?: string
+          empresa_nome?: string | null
+          logo_url?: string | null
+          mensagem_padrao?: string | null
+          updated_at?: string
+          user_id: string
+          webhook_token?: string
+        }
+        Update: {
+          created_at?: string
+          empresa_nome?: string | null
+          logo_url?: string | null
+          mensagem_padrao?: string | null
+          updated_at?: string
+          user_id?: string
+          webhook_token?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +308,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "user"],
+    },
   },
 } as const
