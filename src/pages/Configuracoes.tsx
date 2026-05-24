@@ -176,44 +176,31 @@ export default function Configuracoes() {
             <span className={`text-xs px-2.5 py-1 rounded-full border ${st.cls}`}>{st.text}</span>
           </div>
           <p className="text-xs text-muted-foreground mb-4">
-            Conecte sua instância da Evolution. O sistema recebe as mensagens e repassa o payload completo aos seus webhooks do n8n abaixo.
+            Conecte seu WhatsApp escaneando o QR Code. A instância é criada e configurada automaticamente — sem precisar preencher nada.
           </p>
 
           <div className="grid md:grid-cols-2 gap-4">
             <div className="space-y-3">
-              <div>
-                <Label>URL da Evolution</Label>
-                <Input value={evoUrl} onChange={e => setEvoUrl(e.target.value)} placeholder="https://evolution.lenai.com.br" className="font-mono text-xs" />
-              </div>
-              <div>
-                <Label>API Key Global</Label>
-                <Input type="password" value={evoKey} onChange={e => setEvoKey(e.target.value)} placeholder="sua chave global" className="font-mono text-xs" />
-              </div>
-              <div>
-                <Label>Nome da Instância</Label>
-                <Input value={evoInstance} onChange={e => setEvoInstance(e.target.value)} placeholder="ex: loja-crm" className="font-mono text-xs" />
-              </div>
               <div className="flex flex-wrap gap-2">
-                <Button onClick={saveEvolution} disabled={savingEvo} variant="outline" size="sm">
-                  {savingEvo ? "Salvando..." : "Salvar"}
-                </Button>
                 <Button onClick={connectInstance} disabled={connectLoading} className="gradient-gold text-primary-foreground" size="sm">
                   <QrCode className="w-4 h-4 mr-1" /> {connectLoading ? "Aguarde..." : "Conectar / Gerar QR"}
                 </Button>
-                <Button onClick={fetchQr} variant="outline" size="sm" disabled={!settings.evolution_instance}>
+                <Button onClick={fetchQr} variant="outline" size="sm">
                   <RefreshCw className="w-4 h-4 mr-1" /> Atualizar QR
                 </Button>
-                <Button onClick={refreshStatus} variant="outline" size="sm" disabled={!settings.evolution_instance}>
-                  Status
-                </Button>
-                <Button onClick={logoutInstance} variant="outline" size="sm" disabled={!settings.evolution_instance}>
+                <Button onClick={refreshStatus} variant="outline" size="sm">Status</Button>
+                <Button onClick={logoutInstance} variant="outline" size="sm" disabled={connState !== "open"}>
                   <Power className="w-4 h-4 mr-1" /> Desconectar
                 </Button>
               </div>
-              <p className="text-[11px] text-muted-foreground">
-                A instância é criada já configurada para: ignorar grupos, sempre online, enviar e receber texto/áudio/imagem.
-              </p>
+              <ul className="text-[11px] text-muted-foreground space-y-1 mt-2">
+                <li>• Instância criada automaticamente e isolada por usuário</li>
+                <li>• Webhook configurado para receber mensagens nesta conta</li>
+                <li>• Ignora grupos · sempre online · marca como lida</li>
+                <li>• Mensagens recebidas são repassadas aos seus webhooks n8n abaixo</li>
+              </ul>
             </div>
+
 
             <div className="flex flex-col items-center justify-center bg-muted/30 rounded-xl p-4 min-h-[260px] border border-dashed border-border">
               {qrcode ? (
