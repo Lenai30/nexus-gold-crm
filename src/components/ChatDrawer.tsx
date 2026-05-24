@@ -3,10 +3,11 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { Lead } from "@/hooks/useLeads";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { Send, Loader2, MessageCircle, Smile, Paperclip, X, FileText } from "lucide-react";
+import { Send, Loader2, MessageCircle, Smile, Paperclip, X, FileText, UserCheck, ArrowRightLeft } from "lucide-react";
 import { toast } from "sonner";
 import EmojiPicker, { EmojiStyle, Theme } from "emoji-picker-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface Message {
   id: string;
