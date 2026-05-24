@@ -59,6 +59,24 @@ export default function Configuracoes() {
     toast.success("URL copiada");
   };
 
+  const waWebhookUrl = `${SUPABASE_URL}/functions/v1/wa-webhook?token=${settings.webhook_token}`;
+  const copyWaUrl = () => {
+    navigator.clipboard.writeText(waWebhookUrl);
+    setWaCopied(true); setTimeout(() => setWaCopied(false), 2000);
+    toast.success("URL copiada");
+  };
+
+  const saveEvolution = async () => {
+    setSavingEvo(true);
+    const { error } = await updateSettings({
+      evolution_url: evoUrl.trim() || null,
+      evolution_api_key: evoKey.trim() || null,
+      evolution_instance: evoInstance.trim() || null,
+    } as any);
+    setSavingEvo(false);
+    if (error) toast.error(error.message); else toast.success("WhatsApp configurado");
+  };
+
   return (
     <div className="max-w-5xl">
       <div className="mb-6 rounded-2xl border border-border bg-card/80 p-6 shadow-sm">
