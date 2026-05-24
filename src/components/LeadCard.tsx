@@ -20,8 +20,9 @@ function temperature(lastInteraction: string) {
 }
 
 export default function LeadCard({ lead }: { lead: Lead }) {
-  const { attendLead, deleteLead, updateLead } = useLeads();
+  const { deleteLead, updateLead } = useLeads();
   const temp = temperature(lead.last_interaction);
+  const [chatOpen, setChatOpen] = useState(false);
 
   const handleAgendar = async (e: React.MouseEvent) => {
     e.stopPropagation();
