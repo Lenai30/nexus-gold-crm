@@ -3,7 +3,7 @@ import { Users, TrendingUp, Clock, Flame, ArrowUpRight } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function Dashboard() {
-  const { leads } = useLeads();
+  const { leads, loading } = useLeads();
   const today = new Date(); today.setHours(0,0,0,0);
   const followupsHoje = leads.filter(l => l.prox_acao && new Date(l.prox_acao) <= new Date()).length;
 
@@ -16,15 +16,16 @@ export default function Dashboard() {
 
   return (
     <div>
-      <div className="mb-8">
+      <div className="mb-8 rounded-2xl border border-border bg-card/80 p-6 shadow-sm">
         <h1 className="text-2xl font-bold gradient-gold-text">Dashboard</h1>
         <p className="text-sm text-muted-foreground mt-1">Resumo geral do seu funil de vendas</p>
       </div>
+      {loading && <p className="mb-4 text-sm text-muted-foreground">Carregando dados do CRM...</p>}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-8">
         {stats.map((stat, i) => (
           <motion.div key={stat.label} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}
-            className="bg-card border border-border rounded-xl p-5 hover:shadow-gold/10 hover:border-gold/30 transition-all">
+            className="premium-card rounded-2xl p-5 hover:shadow-gold/10 hover:border-gold/30 transition-all">
             <div className="flex items-start justify-between mb-3">
               <div className="w-10 h-10 rounded-lg bg-gold/10 flex items-center justify-center">
                 <stat.icon className="w-5 h-5 text-gold" />
@@ -39,7 +40,7 @@ export default function Dashboard() {
         ))}
       </div>
 
-      <div className="bg-card border border-border rounded-xl p-6">
+      <div className="premium-card rounded-2xl p-6">
         <h2 className="font-display text-lg font-semibold text-foreground mb-4">Funil de Vendas</h2>
         <div className="space-y-3">
           {COLUMNS.map((col) => {
