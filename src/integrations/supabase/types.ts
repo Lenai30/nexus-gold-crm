@@ -139,6 +139,33 @@ export type Database = {
           },
         ]
       }
+      n8n_webhooks: {
+        Row: {
+          active: boolean
+          created_at: string
+          id: string
+          name: string
+          url: string
+          user_id: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          name?: string
+          url: string
+          user_id: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          name?: string
+          url?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string

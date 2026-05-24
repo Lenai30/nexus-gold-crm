@@ -1,4 +1,4 @@
-// Receive WhatsApp messages from Evolution API
+// Receive WhatsApp messages from Evolution API and fan-out raw payload to user's n8n webhooks
 // URL: POST /functions/v1/wa-webhook?token=<webhook_token>
 import { createClient } from "npm:@supabase/supabase-js@2";
 
@@ -10,20 +10,13 @@ const corsHeaders = {
 const json = (data: unknown, status = 200) =>
   new Response(JSON.stringify(data), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
-function normalizePhone(s: string) {
-  return String(s || "").replace(/\D/g, "");
-}
-
-function extractText(msg: any): string {
-  return (
-    msg?.message?.conversation ||
-    msg?.message?.extendedTextMessage?.text ||
-    msg?.message?.imageMessage?.caption ||
-    msg?.message?.videoMessage?.caption ||
-    msg?.text ||
-    ""
-  );
-}
+const normalizePhone = (s: string) => String(s || "").replace(/\D/g, "");
+const extractText = (msg: any): string =>
+  msg?.message?.conversation ||
+  msg?.message?.extendedTextMessage?.text ||
+  msg?.message?.imageMessage?.caption ||
+  msg?.message?.videoMessage?.caption ||
+  msg?.text || "";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -43,46 +36,61 @@ Deno.serve(async (req) => {
     if (!settings) return json({ error: "Invalid token" }, 401);
     const userId = settings.user_id;
 
-    const payload = await req.json().catch(() => ({}));
-    // Evolution sends { event, data: { ... } } or array under data.messages
-    const data = payload?.data || payload;
+    const rawPayload = await req.json().catch(() => ({}));
+
+    // FAN-OUT to user's n8n webhooks (fire-and-forget, non-blocking)
+    (async () => {
+      const { data: hooks } = await supabase
+        .from("n8n_webhooks")
+        .select("id, url")
+        .eq("user_id", userId)
+        .eq("active", true);
+      await Promise.allSettled(
+        (hooks || []).map((h) =>
+          fetch(h.url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(rawPayload),
+          }).catch(() => null),
+        ),
+      );
+    })();
+
+    // Parse and store messages for internal chat
+    const data = (rawPayload as any)?.data || rawPayload;
     const items: any[] = Array.isArray(data?.messages) ? data.messages : Array.isArray(data) ? data : [data];
 
-    const results: any[] = [];
+    const { data: leads } = await supabase.from("leads").select("id, whatsapp").eq("user_id", userId);
+
+    let processed = 0;
     for (const item of items) {
       if (!item) continue;
       const fromMe = item?.key?.fromMe === true;
-      if (fromMe) continue; // ignore outgoing messages echoed back
-
+      if (fromMe) continue;
       const remoteJid: string = item?.key?.remoteJid || item?.remoteJid || item?.from || "";
+      if (remoteJid.includes("@g.us")) continue; // ignore groups
       const phone = normalizePhone(remoteJid.split("@")[0] || "");
       const text = extractText(item);
       if (!phone || !text) continue;
 
-      // Match lead by phone (last 10-11 digits)
       const tail = phone.slice(-10);
-      const { data: leads } = await supabase
-        .from("leads")
-        .select("id, whatsapp")
-        .eq("user_id", userId);
       const lead = (leads || []).find((l) => normalizePhone(l.whatsapp).endsWith(tail));
 
-      const ins = await supabase.from("messages").insert({
+      await supabase.from("messages").insert({
         user_id: userId,
         lead_id: lead?.id || null,
         whatsapp: phone,
         direction: "in",
         content: text,
         status: "received",
-      }).select().single();
-
+      });
       if (lead?.id) {
         await supabase.from("leads").update({ last_interaction: new Date().toISOString() }).eq("id", lead.id);
       }
-      results.push({ inserted: !ins.error, lead_id: lead?.id || null });
+      processed++;
     }
 
-    return json({ success: true, processed: results.length, results });
+    return json({ success: true, processed });
   } catch (e) {
     return json({ error: e instanceof Error ? e.message : String(e) }, 500);
   }
