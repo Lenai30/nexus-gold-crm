@@ -37,10 +37,19 @@ export default function LeadCard({ lead }: { lead: Lead }) {
             <Megaphone className="w-3 h-3" /> Campanha
           </div>
           <div className="space-y-0.5 text-[11px] text-foreground">
-            {lead.campanha_nome && <div className="font-medium truncate">📣 {lead.campanha_nome}</div>}
-            {(lead.conjunto_nome || lead.anuncio_nome) && (
-              <div className="text-muted-foreground truncate pl-3">
-                ↳ {[lead.conjunto_nome, lead.anuncio_nome].filter(Boolean).join(" · ")}
+            {lead.campanha_nome && (
+              <div className="font-medium truncate cursor-help" title={lead.campanha_nome}>
+                📣 {lead.campanha_nome}
+              </div>
+            )}
+            {lead.conjunto_nome && (
+              <div className="text-muted-foreground truncate pl-3 cursor-help" title={lead.conjunto_nome}>
+                ↳ {lead.conjunto_nome}
+              </div>
+            )}
+            {lead.anuncio_nome && (
+              <div className="text-muted-foreground truncate pl-3 cursor-help" title={lead.anuncio_nome}>
+                🎯 {lead.anuncio_nome}
               </div>
             )}
           </div>
