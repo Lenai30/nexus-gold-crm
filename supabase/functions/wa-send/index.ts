@@ -101,7 +101,7 @@ Deno.serve(async (req) => {
     if (iErr) return json({ error: iErr.message }, 500);
 
     await admin.from("leads").update({ last_interaction: new Date().toISOString() }).eq("id", leadId);
-    return json({ success: true, message: inserted, _signed: sigContent.length });
+    return json({ success: true, message: inserted });
   } catch (e) {
     return json({ error: e instanceof Error ? e.message : String(e) }, 500);
   }
