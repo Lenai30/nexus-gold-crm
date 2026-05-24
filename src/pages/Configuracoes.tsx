@@ -19,10 +19,18 @@ export default function Configuracoes() {
   const [pwInput, setPwInput] = useState("");
   const [webhookUnlocked, setWebhookUnlocked] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [waCopied, setWaCopied] = useState(false);
+  const [evoUrl, setEvoUrl] = useState("");
+  const [evoKey, setEvoKey] = useState("");
+  const [evoInstance, setEvoInstance] = useState("");
+  const [savingEvo, setSavingEvo] = useState(false);
 
   useEffect(() => {
     setEmpresaNome(settings?.empresa_nome || "");
-  }, [settings?.empresa_nome]);
+    setEvoUrl(settings?.evolution_url || "");
+    setEvoKey(settings?.evolution_api_key || "");
+    setEvoInstance(settings?.evolution_instance || "");
+  }, [settings?.empresa_nome, settings?.evolution_url, settings?.evolution_api_key, settings?.evolution_instance]);
 
   if (loading || !settings) return (
     <div className="grid min-h-[55vh] place-items-center text-muted-foreground">
