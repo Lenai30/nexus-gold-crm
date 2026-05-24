@@ -167,6 +167,9 @@ export default function ChatDrawer({ lead, open, onOpenChange }: Props) {
                 <div className={`max-w-[80%] px-3 py-2 rounded-2xl text-sm leading-snug shadow-sm ${
                   m.direction === "out" ? "bg-gold/90 text-primary-foreground rounded-br-md" : "bg-card border border-border rounded-bl-md"
                 }`}>
+                  {m.direction === "out" && m.sender_name && (
+                    <div className="text-[10px] font-bold opacity-90 mb-0.5">{m.sender_name}</div>
+                  )}
                   {renderMedia(m)}
                   {m.content && <div className="whitespace-pre-wrap break-words">{m.content}</div>}
                   <div className={`text-[10px] mt-1 opacity-70 ${m.direction === "out" ? "text-right" : ""}`}>
