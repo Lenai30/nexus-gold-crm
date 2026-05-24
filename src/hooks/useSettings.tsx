@@ -8,6 +8,9 @@ export interface Settings {
   logo_url: string | null;
   mensagem_padrao: string;
   webhook_token: string;
+  evolution_url: string | null;
+  evolution_api_key: string | null;
+  evolution_instance: string | null;
 }
 
 export function useSettings() {
