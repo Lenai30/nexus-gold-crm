@@ -21,10 +21,16 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: "Missing token" }), { status: 401, headers: corsHeaders });
     }
 
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-    );
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (!supabaseUrl || !serviceRoleKey) {
+      return new Response(JSON.stringify({ error: "Server configuration error" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const supabase = createClient(supabaseUrl, serviceRoleKey);
 
     const { data: settings, error: sErr } = await supabase
       .from("settings")
@@ -33,7 +39,7 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     if (sErr || !settings) {
-      return new Response(JSON.stringify({ error: "Invalid token" }), { status: 401, headers: corsHeaders });
+      return new Response(JSON.stringify({ error: "Invalid token" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     const body = await req.json().catch(() => ({}));
@@ -41,7 +47,7 @@ Deno.serve(async (req) => {
     const whatsapp = body.whatsapp || body.phone || body.telefone;
 
     if (!nome || !whatsapp) {
-      return new Response(JSON.stringify({ error: "nome e whatsapp obrigatórios" }), { status: 400, headers: corsHeaders });
+      return new Response(JSON.stringify({ error: "nome e whatsapp obrigatórios" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     const lead = {
@@ -62,7 +68,7 @@ Deno.serve(async (req) => {
 
     const { data: inserted, error: iErr } = await supabase.from("leads").insert(lead).select().single();
     if (iErr) {
-      return new Response(JSON.stringify({ error: iErr.message }), { status: 500, headers: corsHeaders });
+      return new Response(JSON.stringify({ error: iErr.message }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     return new Response(JSON.stringify({ success: true, lead: inserted }), {
