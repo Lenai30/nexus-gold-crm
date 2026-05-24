@@ -22,10 +22,6 @@ export default function Configuracoes() {
   const [pwInput, setPwInput] = useState("");
   const [webhookUnlocked, setWebhookUnlocked] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [evoUrl, setEvoUrl] = useState("");
-  const [evoKey, setEvoKey] = useState("");
-  const [evoInstance, setEvoInstance] = useState("");
-  const [savingEvo, setSavingEvo] = useState(false);
 
   // Connection state
   const [connState, setConnState] = useState<string>("unknown");
@@ -39,10 +35,7 @@ export default function Configuracoes() {
 
   useEffect(() => {
     setEmpresaNome(settings?.empresa_nome || "");
-    setEvoUrl(settings?.evolution_url || "");
-    setEvoKey(settings?.evolution_api_key || "");
-    setEvoInstance(settings?.evolution_instance || "");
-  }, [settings?.empresa_nome, settings?.evolution_url, settings?.evolution_api_key, settings?.evolution_instance]);
+  }, [settings?.empresa_nome]);
 
   const loadHooks = useCallback(async () => {
     if (!user) return;
@@ -53,12 +46,24 @@ export default function Configuracoes() {
   useEffect(() => { loadHooks(); }, [loadHooks]);
 
   const refreshStatus = useCallback(async () => {
-    if (!settings?.evolution_instance) return;
     const { data } = await supabase.functions.invoke("wa-instance", { body: { action: "status" } });
     if (data?.state) setConnState(data.state);
-  }, [settings?.evolution_instance]);
+  }, []);
 
   useEffect(() => { refreshStatus(); }, [refreshStatus]);
+
+  // Auto-refresh status while QR is shown (every 4s) to detect when user scanned
+  useEffect(() => {
+    if (!qrcode) return;
+    const t = setInterval(async () => {
+      const { data } = await supabase.functions.invoke("wa-instance", { body: { action: "status" } });
+      if (data?.state) {
+        setConnState(data.state);
+        if (data.state === "open") { setQrcode(null); toast.success("WhatsApp conectado!"); }
+      }
+    }, 4000);
+    return () => clearInterval(t);
+  }, [qrcode]);
 
   if (loading || !settings) return (
     <div className="grid min-h-[55vh] place-items-center text-muted-foreground">
@@ -87,39 +92,15 @@ export default function Configuracoes() {
     toast.success("URL copiada");
   };
 
-  const saveEvolution = async () => {
-    setSavingEvo(true);
-    const { error } = await updateSettings({
-      evolution_url: evoUrl.trim() || null,
-      evolution_api_key: evoKey.trim() || null,
-      evolution_instance: evoInstance.trim() || null,
-    } as any);
-    setSavingEvo(false);
-    if (error) toast.error(error.message); else toast.success("Credenciais salvas");
-  };
-
   const connectInstance = async () => {
-    if (!evoInstance.trim()) { toast.error("Defina o nome da instância"); return; }
     setConnectLoading(true);
     try {
-      // Save credentials first
-      await updateSettings({
-        evolution_url: evoUrl.trim() || null,
-        evolution_api_key: evoKey.trim() || null,
-        evolution_instance: evoInstance.trim() || null,
-      } as any);
-      const { data: created, error } = await supabase.functions.invoke("wa-instance", {
-        body: { action: "create", instance: evoInstance.trim() },
-      });
+      const { data, error } = await supabase.functions.invoke("wa-instance", { body: { action: "connect" } });
       if (error) throw error;
-      if (created?.error) throw new Error(created.error);
-      // Fetch QR
-      const { data: qr } = await supabase.functions.invoke("wa-instance", {
-        body: { action: "qrcode", instance: evoInstance.trim() },
-      });
-      if (qr?.qrcode) setQrcode(qr.qrcode);
-      toast.success("Instância pronta — escaneie o QR Code");
-      setTimeout(refreshStatus, 3000);
+      if (data?.error) throw new Error(data.error);
+      if (data?.qrcode) setQrcode(data.qrcode);
+      toast.success("Escaneie o QR Code com seu WhatsApp");
+      setTimeout(refreshStatus, 2000);
     } catch (e: any) {
       toast.error(e.message || "Erro ao conectar");
     } finally { setConnectLoading(false); }
@@ -195,44 +176,31 @@ export default function Configuracoes() {
             <span className={`text-xs px-2.5 py-1 rounded-full border ${st.cls}`}>{st.text}</span>
           </div>
           <p className="text-xs text-muted-foreground mb-4">
-            Conecte sua instância da Evolution. O sistema recebe as mensagens e repassa o payload completo aos seus webhooks do n8n abaixo.
+            Conecte seu WhatsApp escaneando o QR Code. A instância é criada e configurada automaticamente — sem precisar preencher nada.
           </p>
 
           <div className="grid md:grid-cols-2 gap-4">
             <div className="space-y-3">
-              <div>
-                <Label>URL da Evolution</Label>
-                <Input value={evoUrl} onChange={e => setEvoUrl(e.target.value)} placeholder="https://evolution.lenai.com.br" className="font-mono text-xs" />
-              </div>
-              <div>
-                <Label>API Key Global</Label>
-                <Input type="password" value={evoKey} onChange={e => setEvoKey(e.target.value)} placeholder="sua chave global" className="font-mono text-xs" />
-              </div>
-              <div>
-                <Label>Nome da Instância</Label>
-                <Input value={evoInstance} onChange={e => setEvoInstance(e.target.value)} placeholder="ex: loja-crm" className="font-mono text-xs" />
-              </div>
               <div className="flex flex-wrap gap-2">
-                <Button onClick={saveEvolution} disabled={savingEvo} variant="outline" size="sm">
-                  {savingEvo ? "Salvando..." : "Salvar"}
-                </Button>
                 <Button onClick={connectInstance} disabled={connectLoading} className="gradient-gold text-primary-foreground" size="sm">
                   <QrCode className="w-4 h-4 mr-1" /> {connectLoading ? "Aguarde..." : "Conectar / Gerar QR"}
                 </Button>
-                <Button onClick={fetchQr} variant="outline" size="sm" disabled={!settings.evolution_instance}>
+                <Button onClick={fetchQr} variant="outline" size="sm">
                   <RefreshCw className="w-4 h-4 mr-1" /> Atualizar QR
                 </Button>
-                <Button onClick={refreshStatus} variant="outline" size="sm" disabled={!settings.evolution_instance}>
-                  Status
-                </Button>
-                <Button onClick={logoutInstance} variant="outline" size="sm" disabled={!settings.evolution_instance}>
+                <Button onClick={refreshStatus} variant="outline" size="sm">Status</Button>
+                <Button onClick={logoutInstance} variant="outline" size="sm" disabled={connState !== "open"}>
                   <Power className="w-4 h-4 mr-1" /> Desconectar
                 </Button>
               </div>
-              <p className="text-[11px] text-muted-foreground">
-                A instância é criada já configurada para: ignorar grupos, sempre online, enviar e receber texto/áudio/imagem.
-              </p>
+              <ul className="text-[11px] text-muted-foreground space-y-1 mt-2">
+                <li>• Instância criada automaticamente e isolada por usuário</li>
+                <li>• Webhook configurado para receber mensagens nesta conta</li>
+                <li>• Ignora grupos · sempre online · marca como lida</li>
+                <li>• Mensagens recebidas são repassadas aos seus webhooks n8n abaixo</li>
+              </ul>
             </div>
+
 
             <div className="flex flex-col items-center justify-center bg-muted/30 rounded-xl p-4 min-h-[260px] border border-dashed border-border">
               {qrcode ? (

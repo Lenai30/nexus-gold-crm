@@ -37,23 +37,26 @@ Deno.serve(async (req) => {
     if (!leadId || !content) return json({ error: "lead_id and content required" }, 400);
 
     const admin = createClient(supabaseUrl, serviceKey);
+    const evoBase = (Deno.env.get("EVOLUTION_URL") || "").replace(/\/$/, "");
+    const evoKey = Deno.env.get("EVOLUTION_API_KEY") || "";
+    if (!evoBase || !evoKey) return json({ error: "Evolution não configurada no servidor" }, 500);
 
     const [{ data: settings }, { data: lead }] = await Promise.all([
-      admin.from("settings").select("evolution_url, evolution_api_key, evolution_instance").eq("user_id", userId).maybeSingle(),
+      admin.from("settings").select("evolution_instance").eq("user_id", userId).maybeSingle(),
       admin.from("leads").select("id, whatsapp, user_id").eq("id", leadId).maybeSingle(),
     ]);
 
     if (!lead || lead.user_id !== userId) return json({ error: "Lead not found" }, 404);
-    if (!settings?.evolution_url || !settings.evolution_api_key || !settings.evolution_instance) {
-      return json({ error: "Evolution API não configurada. Vá em Configurações." }, 400);
+    if (!settings?.evolution_instance) {
+      return json({ error: "WhatsApp não conectado. Vá em Configurações e clique em Conectar." }, 400);
     }
 
     const number = String(lead.whatsapp).replace(/\D/g, "");
-    const url = `${settings.evolution_url.replace(/\/$/, "")}/message/sendText/${settings.evolution_instance}`;
+    const url = `${evoBase}/message/sendText/${settings.evolution_instance}`;
 
     const evoRes = await fetch(url, {
       method: "POST",
-      headers: { "Content-Type": "application/json", apikey: settings.evolution_api_key },
+      headers: { "Content-Type": "application/json", apikey: evoKey },
       body: JSON.stringify({ number, text: content, textMessage: { text: content } }),
     });
     const evoBody = await evoRes.text();
