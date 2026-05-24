@@ -77,7 +77,14 @@ Deno.serve(async (req) => {
       campanha_nome: campanhaNome ? String(campanhaNome).slice(0, 500) : null,
       conjunto_nome: body.conjunto_nome || body.adset_name || null,
       anuncio_nome: body.anuncio_nome || body.ad_name || null,
-      nascimento: body.nascimento || body.birthday || body.birth || body.data || null,
+      nascimento: (() => {
+        const raw = body.nascimento || body.birthday || body.birth || body.data;
+        if (!raw) return null;
+        const s = String(raw).trim();
+        if (!s) return null;
+        const m = s.match(/^\d{4}-\d{2}-\d{2}/);
+        return m ? m[0] : null;
+      })(),
     };
 
     const { data: inserted, error: iErr } = await supabase.from("leads").insert(lead).select().single();
