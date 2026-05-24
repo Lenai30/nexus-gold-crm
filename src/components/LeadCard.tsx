@@ -4,6 +4,11 @@ import { MessageCircle, Calendar, Flame, Trash2, Megaphone } from "lucide-react"
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import ChatDrawer from "./ChatDrawer";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 
 function toLocalInput(iso: string | null) {
   const d = iso ? new Date(iso) : new Date(Date.now() + 60 * 60 * 1000);
@@ -23,22 +28,34 @@ export default function LeadCard({ lead }: { lead: Lead }) {
   const { deleteLead, updateLead } = useLeads();
   const temp = temperature(lead.last_interaction);
   const [chatOpen, setChatOpen] = useState(false);
+  const [agendarOpen, setAgendarOpen] = useState(false);
+  const [agendarDate, setAgendarDate] = useState(toLocalInput(lead.prox_acao));
+  const [agendarNota, setAgendarNota] = useState(lead.notas || "");
+  const [salvando, setSalvando] = useState(false);
 
-  const handleAgendar = async (e: React.MouseEvent) => {
+  const openAgendar = (e: React.MouseEvent) => {
     e.stopPropagation();
-    const current = toLocalInput(lead.prox_acao);
-    const input = window.prompt("Agendar próxima ação (data e hora):", current);
-    if (!input) return;
-    const date = new Date(input);
+    setAgendarDate(toLocalInput(lead.prox_acao));
+    setAgendarNota(lead.notas || "");
+    setAgendarOpen(true);
+  };
+
+  const confirmarAgendar = async () => {
+    const date = new Date(agendarDate);
     if (isNaN(date.getTime())) { toast.error("Data inválida"); return; }
-    await updateLead(lead.id, { prox_acao: date.toISOString() } as any);
+    setSalvando(true);
+    await updateLead(lead.id, { prox_acao: date.toISOString(), notas: agendarNota || null } as any);
+    setSalvando(false);
+    setAgendarOpen(false);
     toast.success(`Agendado para ${date.toLocaleString("pt-BR")}`);
   };
 
   return (
     <motion.div
       layout
-      initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95 }}
+      initial={false}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.95 }}
       className="bg-card/95 border border-border rounded-2xl px-4 py-3.5 flex flex-col shadow-sm hover:shadow-gold hover:border-gold/40 transition-all duration-300 cursor-grab active:cursor-grabbing"
       data-lead-id={lead.id}
     >
@@ -85,7 +102,7 @@ export default function LeadCard({ lead }: { lead: Lead }) {
           className="flex-1 flex items-center justify-center gap-1 py-2 rounded-lg text-[11px] font-medium bg-success/10 text-success hover:bg-success/20 transition-colors">
           <MessageCircle className="w-3.5 h-3.5" />Atender
         </button>
-        <button onClick={handleAgendar}
+        <button onClick={openAgendar}
           className="flex-1 flex items-center justify-center gap-1 py-2 rounded-lg text-[11px] font-medium bg-gold/10 text-gold hover:bg-gold/20 transition-colors">
           <Calendar className="w-3.5 h-3.5" />Agendar
         </button>
@@ -94,7 +111,33 @@ export default function LeadCard({ lead }: { lead: Lead }) {
           <Trash2 className="w-3.5 h-3.5" />
         </button>
       </div>
-      <ChatDrawer lead={lead} open={chatOpen} onOpenChange={setChatOpen} />
+
+      {chatOpen && <ChatDrawer lead={lead} open={chatOpen} onOpenChange={setChatOpen} />}
+
+      <Dialog open={agendarOpen} onOpenChange={setAgendarOpen}>
+        <DialogContent className="sm:max-w-md" onClick={(e) => e.stopPropagation()}>
+          <DialogHeader>
+            <DialogTitle className="gradient-gold-text">Agendar Follow-up</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="text-sm text-muted-foreground">Lead: <span className="text-foreground font-medium">{lead.nome}</span></div>
+            <div>
+              <Label className="mb-1.5 block">Data e Hora</Label>
+              <Input type="datetime-local" value={agendarDate} onChange={(e) => setAgendarDate(e.target.value)} />
+            </div>
+            <div>
+              <Label className="mb-1.5 block">Notas</Label>
+              <Textarea placeholder="Motivo do follow-up..." value={agendarNota} onChange={(e) => setAgendarNota(e.target.value)} rows={3} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setAgendarOpen(false)}>Cancelar</Button>
+            <Button onClick={confirmarAgendar} disabled={salvando} className="gradient-gold text-primary-foreground">
+              {salvando ? "Salvando..." : "Agendar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </motion.div>
   );
 }
