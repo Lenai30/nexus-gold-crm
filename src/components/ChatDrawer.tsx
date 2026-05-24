@@ -26,6 +26,8 @@ interface Props {
   onOpenChange: (open: boolean) => void;
 }
 
+interface TeamOption { user_id: string; display_name: string; role_title: string; }
+
 export default function ChatDrawer({ lead, open, onOpenChange }: Props) {
   const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
@@ -34,8 +36,46 @@ export default function ChatDrawer({ lead, open, onOpenChange }: Props) {
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [pendingFile, setPendingFile] = useState<{ url: string; type: string; name: string; preview: string } | null>(null);
+  const [team, setTeam] = useState<TeamOption[]>([]);
+  const [assignee, setAssignee] = useState<string | null>(lead?.assigned_to || null);
+  const [transferring, setTransferring] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  // Sync assignee from lead prop (lead may be updated via realtime by parent)
+  useEffect(() => { setAssignee(lead?.assigned_to || null); }, [lead?.assigned_to]);
+
+  // Load team options (org members) — only if you can transfer
+  useEffect(() => {
+    if (!open || !lead || !user) return;
+    const canTransfer = !assignee || assignee === user.id || lead.user_id === user.id;
+    if (!canTransfer) { setTeam([]); return; }
+    (async () => {
+      const ownerId = lead.user_id;
+      const { data: members } = await supabase.from("team_members")
+        .select("member_user_id, display_name, role_title")
+        .eq("owner_id", ownerId).eq("active", true);
+      const { data: ownerProfile } = await supabase.from("profiles")
+        .select("id, empresa_nome").eq("id", ownerId).maybeSingle();
+      const list: TeamOption[] = [
+        { user_id: ownerId, display_name: (ownerProfile as any)?.empresa_nome || "Dono", role_title: "Dono" },
+        ...((members || []).map((m: any) => ({ user_id: m.member_user_id, display_name: m.display_name, role_title: m.role_title }))),
+      ];
+      setTeam(list);
+    })();
+  }, [open, lead, user, assignee]);
+
+  const transferTo = async (newAssignee: string) => {
+    if (!lead || newAssignee === assignee) return;
+    setTransferring(true);
+    const { error } = await supabase.rpc("transfer_lead_assignment", {
+      _lead_id: lead.id, _new_assignee: newAssignee,
+    });
+    setTransferring(false);
+    if (error) { toast.error(error.message); return; }
+    setAssignee(newAssignee);
+    toast.success("Conversa transferida");
+  };
 
   useEffect(() => {
     if (!open || !lead || !user) return;
