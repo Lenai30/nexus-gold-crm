@@ -45,17 +45,27 @@ Deno.serve(async (req) => {
 
     const [{ data: member }, { data: lead }] = await Promise.all([
       admin.from("team_members").select("owner_id, display_name").eq("member_user_id", userId).maybeSingle(),
-      admin.from("leads").select("id, whatsapp, user_id").eq("id", leadId).maybeSingle(),
+      admin.from("leads").select("id, whatsapp, user_id, assigned_to, status").eq("id", leadId).maybeSingle(),
     ]);
 
     const ownerId = member?.owner_id || userId;
-    const { data: settings } = await admin.from("settings").select("evolution_instance, empresa_nome").eq("user_id", ownerId).maybeSingle();
+    const { data: settings } = await admin.from("settings")
+      .select("evolution_instance, empresa_nome, ai_pause_minutes").eq("user_id", ownerId).maybeSingle();
     const senderName = member?.display_name || settings?.empresa_nome || "Atendente";
 
     if (!lead || lead.user_id !== ownerId) return json({ error: "Lead not found" }, 404);
     if (!settings?.evolution_instance) {
       return json({ error: "WhatsApp não conectado. Vá em Configurações e clique em Conectar." }, 400);
     }
+
+    // Auto-claim + pause AI agent for this conversation
+    const pauseMin = Math.max(0, Number(settings.ai_pause_minutes ?? 30));
+    const pausedUntil = new Date(Date.now() + pauseMin * 60_000).toISOString();
+    const leadPatch: Record<string, unknown> = {
+      last_interaction: new Date().toISOString(),
+      ai_paused_until: pausedUntil,
+    };
+    if (!lead.assigned_to) leadPatch.assigned_to = userId;
 
     const number = String(lead.whatsapp).replace(/\D/g, "");
     const instance = settings.evolution_instance;
