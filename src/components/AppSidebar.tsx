@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { LayoutDashboard, Kanban, CalendarClock, BarChart3, Sun, Moon, ChevronLeft, ChevronRight, Gem, Settings, LogOut, Shield } from "lucide-react";
 import { useTheme } from "@/contexts/ThemeContext";
