@@ -61,9 +61,11 @@ Deno.serve(async (req) => {
     const instance = settings.evolution_instance;
     const headers = { "Content-Type": "application/json", apikey: evoKey };
 
+    // Signature on top of message (so client knows who is talking)
+    const signedText = content ? `*${senderName}:*\n${content}` : "";
+
     let evoRes: Response;
     if (mediaUrl) {
-      // Decide endpoint by mime
       const mt = (mediaType || "").toLowerCase();
       const kind = mt.startsWith("image/") ? "image"
         : mt.startsWith("video/") ? "video"
@@ -76,22 +78,18 @@ Deno.serve(async (req) => {
           mimetype: mediaType || "application/octet-stream",
           media: mediaUrl,
           fileName: fileName || "arquivo",
-          caption: content || undefined,
+          caption: signedText || `*${senderName}*`,
         }),
       });
     } else {
       evoRes = await fetch(`${evoBase}/message/sendText/${instance}`, {
         method: "POST", headers,
-        body: JSON.stringify({ number, text: content, textMessage: { text: content } }),
+        body: JSON.stringify({ number, text: signedText, textMessage: { text: signedText } }),
       });
     }
     const evoBody = await evoRes.text();
     if (!evoRes.ok) return json({ error: `Evolution: ${evoRes.status} ${evoBody}` }, 502);
 
-    const sigContent = content ? `*${senderName}:*\n${content}` : content;
-
-    // For text-only, prepend signature in the actual WhatsApp text by re-issuing if needed.
-    // The send already happened above; signature is stored in DB for the local chat view.
 
     const { data: inserted, error: iErr } = await admin.from("messages").insert({
       user_id: ownerId, lead_id: leadId, whatsapp: number,
