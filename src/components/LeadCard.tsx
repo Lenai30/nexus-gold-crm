@@ -18,7 +18,7 @@ export default function LeadCard({ lead }: { lead: Lead }) {
     <motion.div
       layout
       initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95 }}
-      className="bg-card/95 border border-border rounded-2xl px-4 py-5 shadow-sm hover:shadow-gold hover:border-gold/40 transition-all duration-300 cursor-grab active:cursor-grabbing"
+      className="bg-card/95 border border-border rounded-2xl px-5 py-6 min-h-[220px] flex flex-col shadow-sm hover:shadow-gold hover:border-gold/40 transition-all duration-300 cursor-grab active:cursor-grabbing"
       data-lead-id={lead.id}
     >
       <div className="flex items-start justify-between mb-4">
