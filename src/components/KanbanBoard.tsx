@@ -5,7 +5,7 @@ import LeadCard from "@/components/LeadCard";
 import { motion } from "framer-motion";
 
 export default function KanbanBoard() {
-  const { filteredLeads, moveLead } = useLeads();
+  const { filteredLeads, moveLead, loading } = useLeads();
   const columnsRef = useRef<Map<string, HTMLDivElement>>(new Map());
   const sortablesRef = useRef<Sortable[]>([]);
 
@@ -43,10 +43,10 @@ export default function KanbanBoard() {
               <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-gold/15 text-gold">{colLeads.length}</span>
             </div>
             <div ref={(el) => { if (el) columnsRef.current.set(col.id, el); }} data-column={col.id}
-              className="flex-1 space-y-3 min-h-[200px] p-2 rounded-xl bg-muted/50 border border-border/50">
+              className="flex-1 space-y-3 min-h-[260px] p-3 rounded-2xl bg-muted/45 border border-border/70 shadow-inner">
               {colLeads.map((lead) => <LeadCard key={lead.id} lead={lead} />)}
               {colLeads.length === 0 && (
-                <div className="flex items-center justify-center h-24 text-xs text-muted-foreground">Arraste leads aqui</div>
+                <div className="flex items-center justify-center h-24 text-xs text-muted-foreground">{loading ? "Carregando..." : "Arraste leads aqui"}</div>
               )}
             </div>
           </motion.div>
