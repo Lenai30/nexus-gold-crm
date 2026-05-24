@@ -4,12 +4,17 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/contexts/ThemeContext";
-import { LeadsProvider } from "@/contexts/LeadsContext";
+import { AuthProvider } from "@/hooks/useAuth";
+import { LeadsProvider } from "@/hooks/useLeads";
+import ProtectedRoute from "@/components/ProtectedRoute";
 import AppLayout from "@/components/AppLayout";
+import Auth from "@/pages/Auth";
 import Dashboard from "@/pages/Dashboard";
 import Pipeline from "@/pages/Pipeline";
 import FollowUp from "@/pages/FollowUp";
 import Relatorios from "@/pages/Relatorios";
+import Configuracoes from "@/pages/Configuracoes";
+import Admin from "@/pages/Admin";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -17,23 +22,34 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider>
-      <LeadsProvider>
+      <AuthProvider>
         <TooltipProvider>
           <Toaster />
           <Sonner />
           <BrowserRouter>
-            <AppLayout>
-              <Routes>
-                <Route path="/" element={<Dashboard />} />
-                <Route path="/pipeline" element={<Pipeline />} />
-                <Route path="/followup" element={<FollowUp />} />
-                <Route path="/relatorios" element={<Relatorios />} />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </AppLayout>
+            <Routes>
+              <Route path="/auth" element={<Auth />} />
+              <Route path="*" element={
+                <ProtectedRoute>
+                  <LeadsProvider>
+                    <AppLayout>
+                      <Routes>
+                        <Route path="/" element={<Dashboard />} />
+                        <Route path="/pipeline" element={<Pipeline />} />
+                        <Route path="/followup" element={<FollowUp />} />
+                        <Route path="/relatorios" element={<Relatorios />} />
+                        <Route path="/configuracoes" element={<Configuracoes />} />
+                        <Route path="/admin" element={<ProtectedRoute requireAdmin><Admin /></ProtectedRoute>} />
+                        <Route path="*" element={<NotFound />} />
+                      </Routes>
+                    </AppLayout>
+                  </LeadsProvider>
+                </ProtectedRoute>
+              } />
+            </Routes>
           </BrowserRouter>
         </TooltipProvider>
-      </LeadsProvider>
+      </AuthProvider>
     </ThemeProvider>
   </QueryClientProvider>
 );
