@@ -169,6 +169,30 @@ export default function Configuracoes() {
           <Button onClick={saveNome} className="gradient-gold text-primary-foreground">Salvar Nome</Button>
         </section>
 
+        {/* IA / Handoff */}
+        <section className="bg-card/90 border border-border rounded-2xl p-6 shadow-sm hover:border-gold/30 transition-colors">
+          <h2 className="font-display text-lg font-semibold flex items-center gap-2 mb-1">
+            <Info className="w-5 h-5 text-gold" />Agente de IA (Handoff humano)
+          </h2>
+          <p className="text-xs text-muted-foreground mb-4">
+            Quando um humano responde uma conversa, o agente do n8n é pausado nessa conversa pelo tempo abaixo (outras conversas continuam normalmente).
+          </p>
+          <div className="flex items-end gap-3 max-w-md">
+            <div className="flex-1">
+              <Label>Pausar IA por (minutos)</Label>
+              <Input type="number" min={0} max={1440} value={aiPauseMin}
+                onChange={e => setAiPauseMin(Math.max(0, Number(e.target.value) || 0))} />
+            </div>
+            <Button onClick={async () => {
+              const { error } = await updateSettings({ ai_pause_minutes: aiPauseMin });
+              if (error) toast.error(error.message); else toast.success("Tempo de pausa atualizado");
+            }} className="gradient-gold text-primary-foreground">Salvar</Button>
+          </div>
+          <p className="text-[11px] text-muted-foreground mt-3">
+            O sistema envia <span className="font-mono">crm_context.ai_paused</span> ao seu fluxo n8n. No agente, adicione uma condição para responder apenas quando <span className="font-mono">ai_paused === false</span>.
+          </p>
+        </section>
+
         {/* WhatsApp Evolution + QR */}
         <section className="bg-card/90 border border-border rounded-2xl p-6 shadow-sm hover:border-gold/30 transition-colors">
           <div className="flex items-center justify-between mb-1">
