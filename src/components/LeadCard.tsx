@@ -67,7 +67,7 @@ export default function LeadCard({ lead }: { lead: Lead }) {
 
       <div className="flex gap-2 pt-3 mt-1 border-t border-border">
         <button onClick={(e)=>{e.stopPropagation(); attendLead(lead.id);}}
-          className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-medium bg-success/10 text-success hover:bg-success/20 transition-colors">
+          className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-medium bg-success/10 text-success hover:bg-success/20 transition-colors">
           <MessageCircle className="w-3.5 h-3.5" />Atender
         </button>
         <button onClick={(e)=>e.stopPropagation()}
