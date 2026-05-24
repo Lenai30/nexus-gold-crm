@@ -22,10 +22,6 @@ export default function Configuracoes() {
   const [pwInput, setPwInput] = useState("");
   const [webhookUnlocked, setWebhookUnlocked] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [evoUrl, setEvoUrl] = useState("");
-  const [evoKey, setEvoKey] = useState("");
-  const [evoInstance, setEvoInstance] = useState("");
-  const [savingEvo, setSavingEvo] = useState(false);
 
   // Connection state
   const [connState, setConnState] = useState<string>("unknown");
@@ -39,10 +35,7 @@ export default function Configuracoes() {
 
   useEffect(() => {
     setEmpresaNome(settings?.empresa_nome || "");
-    setEvoUrl(settings?.evolution_url || "");
-    setEvoKey(settings?.evolution_api_key || "");
-    setEvoInstance(settings?.evolution_instance || "");
-  }, [settings?.empresa_nome, settings?.evolution_url, settings?.evolution_api_key, settings?.evolution_instance]);
+  }, [settings?.empresa_nome]);
 
   const loadHooks = useCallback(async () => {
     if (!user) return;
@@ -53,12 +46,24 @@ export default function Configuracoes() {
   useEffect(() => { loadHooks(); }, [loadHooks]);
 
   const refreshStatus = useCallback(async () => {
-    if (!settings?.evolution_instance) return;
     const { data } = await supabase.functions.invoke("wa-instance", { body: { action: "status" } });
     if (data?.state) setConnState(data.state);
-  }, [settings?.evolution_instance]);
+  }, []);
 
   useEffect(() => { refreshStatus(); }, [refreshStatus]);
+
+  // Auto-refresh status while QR is shown (every 4s) to detect when user scanned
+  useEffect(() => {
+    if (!qrcode) return;
+    const t = setInterval(async () => {
+      const { data } = await supabase.functions.invoke("wa-instance", { body: { action: "status" } });
+      if (data?.state) {
+        setConnState(data.state);
+        if (data.state === "open") { setQrcode(null); toast.success("WhatsApp conectado!"); }
+      }
+    }, 4000);
+    return () => clearInterval(t);
+  }, [qrcode]);
 
   if (loading || !settings) return (
     <div className="grid min-h-[55vh] place-items-center text-muted-foreground">
@@ -87,39 +92,15 @@ export default function Configuracoes() {
     toast.success("URL copiada");
   };
 
-  const saveEvolution = async () => {
-    setSavingEvo(true);
-    const { error } = await updateSettings({
-      evolution_url: evoUrl.trim() || null,
-      evolution_api_key: evoKey.trim() || null,
-      evolution_instance: evoInstance.trim() || null,
-    } as any);
-    setSavingEvo(false);
-    if (error) toast.error(error.message); else toast.success("Credenciais salvas");
-  };
-
   const connectInstance = async () => {
-    if (!evoInstance.trim()) { toast.error("Defina o nome da instância"); return; }
     setConnectLoading(true);
     try {
-      // Save credentials first
-      await updateSettings({
-        evolution_url: evoUrl.trim() || null,
-        evolution_api_key: evoKey.trim() || null,
-        evolution_instance: evoInstance.trim() || null,
-      } as any);
-      const { data: created, error } = await supabase.functions.invoke("wa-instance", {
-        body: { action: "create", instance: evoInstance.trim() },
-      });
+      const { data, error } = await supabase.functions.invoke("wa-instance", { body: { action: "connect" } });
       if (error) throw error;
-      if (created?.error) throw new Error(created.error);
-      // Fetch QR
-      const { data: qr } = await supabase.functions.invoke("wa-instance", {
-        body: { action: "qrcode", instance: evoInstance.trim() },
-      });
-      if (qr?.qrcode) setQrcode(qr.qrcode);
-      toast.success("Instância pronta — escaneie o QR Code");
-      setTimeout(refreshStatus, 3000);
+      if (data?.error) throw new Error(data.error);
+      if (data?.qrcode) setQrcode(data.qrcode);
+      toast.success("Escaneie o QR Code com seu WhatsApp");
+      setTimeout(refreshStatus, 2000);
     } catch (e: any) {
       toast.error(e.message || "Erro ao conectar");
     } finally { setConnectLoading(false); }
