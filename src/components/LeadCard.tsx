@@ -1,7 +1,9 @@
+import { useState } from "react";
 import { Lead, useLeads } from "@/hooks/useLeads";
 import { MessageCircle, Calendar, Flame, Trash2, Megaphone } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
+import ChatDrawer from "./ChatDrawer";
 
 function toLocalInput(iso: string | null) {
   const d = iso ? new Date(iso) : new Date(Date.now() + 60 * 60 * 1000);
