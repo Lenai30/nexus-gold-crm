@@ -105,6 +105,8 @@ export type Database = {
           direction: string
           id: string
           lead_id: string | null
+          media_type: string | null
+          media_url: string | null
           status: string
           user_id: string
           whatsapp: string
@@ -115,6 +117,8 @@ export type Database = {
           direction: string
           id?: string
           lead_id?: string | null
+          media_type?: string | null
+          media_url?: string | null
           status?: string
           user_id: string
           whatsapp: string
@@ -125,6 +129,8 @@ export type Database = {
           direction?: string
           id?: string
           lead_id?: string | null
+          media_type?: string | null
+          media_url?: string | null
           status?: string
           user_id?: string
           whatsapp?: string

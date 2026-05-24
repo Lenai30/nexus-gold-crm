@@ -1,4 +1,4 @@
-// Send WhatsApp message via Evolution API
+// Send WhatsApp message via Evolution API (text or media)
 import { createClient } from "npm:@supabase/supabase-js@2";
 
 const corsHeaders = {
@@ -6,7 +6,6 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
-
 const json = (data: unknown, status = 200) =>
   new Response(JSON.stringify(data), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
@@ -34,7 +33,10 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const leadId = String(body.lead_id || "");
     const content = String(body.content || "").trim();
-    if (!leadId || !content) return json({ error: "lead_id and content required" }, 400);
+    const mediaUrl = body.media_url ? String(body.media_url) : null;
+    const mediaType = body.media_type ? String(body.media_type) : null;
+    const fileName = body.file_name ? String(body.file_name) : null;
+    if (!leadId || (!content && !mediaUrl)) return json({ error: "lead_id and content/media required" }, 400);
 
     const admin = createClient(supabaseUrl, serviceKey);
     const evoBase = (Deno.env.get("EVOLUTION_URL") || "").replace(/\/$/, "");
@@ -52,24 +54,45 @@ Deno.serve(async (req) => {
     }
 
     const number = String(lead.whatsapp).replace(/\D/g, "");
-    const url = `${evoBase}/message/sendText/${settings.evolution_instance}`;
+    const instance = settings.evolution_instance;
+    const headers = { "Content-Type": "application/json", apikey: evoKey };
 
-    const evoRes = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", apikey: evoKey },
-      body: JSON.stringify({ number, text: content, textMessage: { text: content } }),
-    });
+    let evoRes: Response;
+    if (mediaUrl) {
+      // Decide endpoint by mime
+      const mt = (mediaType || "").toLowerCase();
+      const kind = mt.startsWith("image/") ? "image"
+        : mt.startsWith("video/") ? "video"
+        : mt.startsWith("audio/") ? "audio" : "document";
+      evoRes = await fetch(`${evoBase}/message/sendMedia/${instance}`, {
+        method: "POST", headers,
+        body: JSON.stringify({
+          number,
+          mediatype: kind,
+          mimetype: mediaType || "application/octet-stream",
+          media: mediaUrl,
+          fileName: fileName || "arquivo",
+          caption: content || undefined,
+        }),
+      });
+    } else {
+      evoRes = await fetch(`${evoBase}/message/sendText/${instance}`, {
+        method: "POST", headers,
+        body: JSON.stringify({ number, text: content, textMessage: { text: content } }),
+      });
+    }
     const evoBody = await evoRes.text();
     if (!evoRes.ok) return json({ error: `Evolution: ${evoRes.status} ${evoBody}` }, 502);
 
     const { data: inserted, error: iErr } = await admin.from("messages").insert({
       user_id: userId, lead_id: leadId, whatsapp: number,
-      direction: "out", content, status: "sent",
+      direction: "out", content: content || (mediaUrl ? `[${mediaType?.split("/")[0] || "arquivo"}]` : ""),
+      status: "sent",
+      media_url: mediaUrl, media_type: mediaType,
     }).select().single();
     if (iErr) return json({ error: iErr.message }, 500);
 
     await admin.from("leads").update({ last_interaction: new Date().toISOString() }).eq("id", leadId);
-
     return json({ success: true, message: inserted });
   } catch (e) {
     return json({ error: e instanceof Error ? e.message : String(e) }, 500);

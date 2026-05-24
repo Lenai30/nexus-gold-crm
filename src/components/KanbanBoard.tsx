@@ -44,7 +44,7 @@ export default function KanbanBoard() {
       {COLUMNS.map((col, idx) => {
         const colLeads = filteredLeads.filter((l) => l.status === col.id);
         return (
-          <motion.div key={col.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.05 }} className="flex flex-col">
+          <motion.div key={col.id} initial={false} animate={{ opacity: 1, y: 0 }} className="flex flex-col">
             <div className="flex items-center justify-between mb-3 px-1">
               <div className="flex items-center gap-2">
                 <span className="text-lg">{col.emoji}</span>
