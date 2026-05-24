@@ -11,6 +11,7 @@ export interface Settings {
   evolution_url: string | null;
   evolution_api_key: string | null;
   evolution_instance: string | null;
+  ai_pause_minutes: number;
 }
 
 export function useSettings() {
