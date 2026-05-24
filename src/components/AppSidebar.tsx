@@ -14,13 +14,22 @@ const NAV = [
   { path: "/configuracoes", label: "Configurações", icon: Settings },
 ];
 
-export default function AppSidebar({ mobileOpen = false, onMobileClose }: { mobileOpen?: boolean; onMobileClose?: () => void }) {
+export default function AppSidebar({
+  mobileOpen = false,
+  onMobileClose,
+  collapsed,
+  onCollapsedChange,
+}: {
+  mobileOpen?: boolean;
+  onMobileClose?: () => void;
+  collapsed: boolean;
+  onCollapsedChange: (collapsed: boolean) => void;
+}) {
   const { theme, toggleTheme } = useTheme();
   const { signOut, isAdmin } = useAuth();
   const { settings } = useSettings();
   const location = useLocation();
   const navigate = useNavigate();
-  const [collapsed, setCollapsed] = useState(false);
 
   const sidebarWidth = collapsed ? 72 : 256;
 
@@ -76,7 +85,7 @@ export default function AppSidebar({ mobileOpen = false, onMobileClose }: { mobi
           <LogOut className="w-5 h-5" />
           {!collapsed && <span className="text-sm font-medium">Sair</span>}
         </button>
-        <button onClick={() => setCollapsed(!collapsed)} className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-all">
+        <button onClick={() => onCollapsedChange(!collapsed)} className="hidden md:flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-all">
           {collapsed ? <ChevronRight className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
           {!collapsed && <span className="text-sm font-medium">Recolher</span>}
         </button>
