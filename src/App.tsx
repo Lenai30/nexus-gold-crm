@@ -29,6 +29,7 @@ const App = () => (
           <Toaster />
           <Sonner />
           <BrowserRouter>
+            <ScrollRestoration />
             <Routes>
               <Route path="/auth" element={<Auth />} />
               <Route path="*" element={
