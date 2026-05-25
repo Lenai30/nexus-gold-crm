@@ -51,11 +51,7 @@ export default function LeadCard({ lead }: { lead: Lead }) {
   };
 
   return (
-    <motion.div
-      layout
-      initial={false}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, scale: 0.95 }}
+    <div
       className="bg-card/95 border border-border rounded-2xl px-4 py-3.5 flex flex-col shadow-sm hover:shadow-gold hover:border-gold/40 transition-all duration-300 cursor-grab active:cursor-grabbing"
       data-lead-id={lead.id}
     >
@@ -138,6 +134,6 @@ export default function LeadCard({ lead }: { lead: Lead }) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </motion.div>
+    </div>
   );
 }
