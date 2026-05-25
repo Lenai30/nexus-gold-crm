@@ -29,7 +29,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, s) => {
-      setSession(s);
+      setSession((prev) => {
+        // Avoid re-renders (and child re-mounts / flicker) when only the token refreshes silently
+        if (prev?.user?.id === s?.user?.id && prev?.access_token === s?.access_token) return prev;
+        return s;
+      });
       if (s?.user) {
         setTimeout(() => checkAdmin(s.user.id), 0);
       } else {
