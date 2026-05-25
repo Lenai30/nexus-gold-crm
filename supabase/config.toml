@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.wa-webhook]
 verify_jwt = false
+
+[functions.lead-lookup]
+verify_jwt = false
