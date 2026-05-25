@@ -292,6 +292,76 @@ export default function Configuracoes() {
           </div>
         </section>
 
+        {/* Consulta de Lead para n8n (HTTP node) */}
+        <section className="bg-card/90 border border-border rounded-2xl p-6 shadow-sm hover:border-gold/30 transition-colors">
+          <h2 className="font-display text-lg font-semibold flex items-center gap-2 mb-1">
+            <Link2 className="w-5 h-5 text-gold" />Consulta de Lead (HTTP n8n)
+          </h2>
+          <p className="text-xs text-muted-foreground mb-4">
+            Use esta URL no nó <span className="font-mono">HTTP Request</span> do n8n logo após o Webhook para descobrir o status do lead no seu banco e rotear o fluxo (Vendas, Suporte, Humano ou Novo do anúncio). Esta URL é exclusiva da sua conta.
+          </p>
+
+          <div className="space-y-3">
+            <div>
+              <Label>URL completa (com token desta conta)</Label>
+              <div className="flex gap-2">
+                <Input readOnly value={lookupUrl} className="font-mono text-[11px]" />
+                <Button variant="outline" onClick={() => { navigator.clipboard.writeText(lookupUrl); toast.success("URL copiada"); }}>
+                  <Copy className="w-4 h-4" />
+                </Button>
+              </div>
+              <p className="text-[11px] text-muted-foreground mt-1">
+                Método: <span className="font-mono">GET</span> · use <span className="font-mono">Send Query Parameters</span> no n8n.
+              </p>
+            </div>
+
+            <div className="rounded-lg border border-border bg-muted/30 p-4">
+              <p className="text-xs font-semibold mb-2">Configuração do nó HTTP Request no n8n</p>
+              <ul className="text-xs text-muted-foreground space-y-1.5 list-disc pl-5">
+                <li><b>Method:</b> <span className="font-mono">GET</span></li>
+                <li><b>URL:</b> <span className="font-mono break-all">{SUPABASE_URL}/functions/v1/lead-lookup</span></li>
+                <li><b>Authentication:</b> None</li>
+                <li><b>Send Query Parameters:</b> ativado, modo "Using Fields Below"</li>
+                <li>Parâmetro <span className="font-mono">token</span> = <span className="font-mono break-all">{settings.webhook_token}</span></li>
+                <li>Parâmetro <span className="font-mono">whatsapp</span> = <span className="font-mono">{`{{ $json.body.data.key.remoteJid }}`}</span></li>
+                <li>Parâmetro <span className="font-mono">campaign_id</span> = <span className="font-mono">{`{{ $json.body.data.campaign_id || '' }}`}</span> (opcional, vindo da Meta)</li>
+              </ul>
+            </div>
+
+            <div className="rounded-lg border border-border bg-muted/30 p-4">
+              <p className="text-xs font-semibold mb-2">Resposta da API (use no Switch seguinte)</p>
+              <pre className="text-[11px] font-mono overflow-x-auto">{`{
+  "exists": true,
+  "route": "sales",              // "not_found" | "sales" | "support" | "human"
+  "should_respond": true,        // false quando humano está atendendo
+  "is_new_from_ad": false,       // true se novo lead + campaign_id presente
+  "ai_paused": false,
+  "lead": {
+    "id": "uuid",
+    "nome": "João",
+    "status": "novos",           // novos | negociacao | followup | posvenda
+    "assigned_to": "uuid|null",
+    "campanha_id": "123",
+    "campanha_nome": "Black Friday",
+    "score": 5
+  },
+  "incoming_campaign_id": "123",
+  "whatsapp_normalized": "5511999990000"
+}`}</pre>
+            </div>
+
+            <div className="rounded-lg border border-border bg-muted/30 p-4">
+              <p className="text-xs font-semibold mb-2">Como rotear no Switch (campo: <span className="font-mono">{`{{ $json.route }}`}</span>)</p>
+              <ul className="text-xs text-muted-foreground space-y-1 list-disc pl-5">
+                <li><b>not_found</b> → identifica campanha → cria lead no CRM → Agente de Vendas</li>
+                <li><b>sales</b> → Agente de Vendas (lead já existe, status novos/followup)</li>
+                <li><b>support</b> → Agente de Suporte (já é cliente, pós-venda)</li>
+                <li><b>human</b> → encerra o fluxo (humano em negociação ou IA pausada) — assim não trava nem responde junto</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
         {/* Webhook entrada de leads */}
         <section className="bg-card/90 border border-border rounded-2xl p-6 shadow-sm hover:border-gold/30 transition-colors">
           <h2 className="font-display text-lg font-semibold flex items-center gap-2 mb-4"><Link2 className="w-5 h-5 text-gold" />Webhook de Entrada (Leads)</h2>
