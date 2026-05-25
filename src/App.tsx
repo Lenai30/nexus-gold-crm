@@ -8,6 +8,7 @@ import { AuthProvider } from "@/hooks/useAuth";
 import { LeadsProvider } from "@/hooks/useLeads";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import AppLayout from "@/components/AppLayout";
+import ScrollRestoration from "@/hooks/useScrollRestoration";
 import Auth from "@/pages/Auth";
 import Dashboard from "@/pages/Dashboard";
 import Pipeline from "@/pages/Pipeline";
