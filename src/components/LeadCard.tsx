@@ -134,6 +134,6 @@ export default function LeadCard({ lead }: { lead: Lead }) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </motion.div>
+    </div>
   );
 }
