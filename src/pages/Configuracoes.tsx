@@ -77,7 +77,7 @@ export default function Configuracoes() {
   );
 
   const webhookUrl = `${SUPABASE_URL}/functions/v1/webhook-lead?token=${settings.webhook_token}`;
-  const lookupUrl = `${SUPABASE_URL}/functions/v1/lead-lookup?token=${settings.webhook_token}&whatsapp={{ $json.body.data.key.remoteJid }}&campaign_id={{ $json.body.data.campaign_id || '' }}`;
+  const lookupUrl = `${SUPABASE_URL}/functions/v1/lead-lookup?token=${settings.webhook_token}&whatsapp={{ $json.body.data.key.remoteJid.split('@')[0] }}&campaign_id={{ $json.body.data.campaign_id || '' }}`;
   const samplePayload = JSON.stringify({
     nome: "João Silva", whatsapp: "+5511999990000",
     origem: "Facebook Ads", origem_tag: "paid", score: 5,
@@ -323,7 +323,7 @@ export default function Configuracoes() {
                 <li><b>Authentication:</b> None</li>
                 <li><b>Send Query Parameters:</b> ativado, modo "Using Fields Below"</li>
                 <li>Parâmetro <span className="font-mono">token</span> = <span className="font-mono break-all">{settings.webhook_token}</span></li>
-                <li>Parâmetro <span className="font-mono">whatsapp</span> = <span className="font-mono">{`{{ $json.body.data.key.remoteJid }}`}</span></li>
+                <li>Parâmetro <span className="font-mono">whatsapp</span> = <span className="font-mono">{`{{ $json.body.data.key.remoteJid.split('@')[0] }}`}</span></li>
                 <li>Parâmetro <span className="font-mono">campaign_id</span> = <span className="font-mono">{`{{ $json.body.data.campaign_id || '' }}`}</span> (opcional, vindo da Meta)</li>
               </ul>
             </div>
