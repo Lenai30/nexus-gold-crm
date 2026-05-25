@@ -26,6 +26,15 @@ export default function KanbanBoard() {
       onEnd: (evt) => {
         const id = evt.item.getAttribute("data-lead-id");
         const to = (evt.to as HTMLElement).getAttribute("data-column") as any;
+        // Reverte a movimentação física do DOM feita pelo SortableJS
+        // para evitar conflito com o React (erro removeChild).
+        // O React vai re-renderizar com o novo status na coluna correta.
+        try {
+          const from = evt.from as HTMLElement;
+          const oldIndex = evt.oldIndex ?? 0;
+          const ref = from.children[oldIndex] || null;
+          from.insertBefore(evt.item, ref);
+        } catch {}
         if (id && to) moveLead(id, to);
       },
     });
