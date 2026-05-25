@@ -83,7 +83,7 @@ export function LeadsProvider({ children }: { children: ReactNode }) {
       .subscribe();
 
     return () => { active = false; supabase.removeChannel(channel); };
-  }, [user]);
+  }, [user?.id]);
 
   const moveLead = useCallback(async (id: string, status: Lead["status"]) => {
     setLeads((curr) => curr.map((lead) => lead.id === id ? { ...lead, status, last_interaction: new Date().toISOString() } : lead));
