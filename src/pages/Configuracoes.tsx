@@ -78,6 +78,7 @@ export default function Configuracoes() {
 
   const webhookUrl = `${SUPABASE_URL}/functions/v1/webhook-lead?token=${settings.webhook_token}`;
   const lookupUrl = `${SUPABASE_URL}/functions/v1/lead-lookup?token=${settings.webhook_token}&whatsapp={{ $json.body.data.key.remoteJid.split('@')[0] }}&campaign_id={{ $json.body.data.campaign_id || '' }}`;
+  const updateUrl = `${SUPABASE_URL}/functions/v1/lead-update?token=${settings.webhook_token}`;
   const samplePayload = JSON.stringify({
     nome: "João Silva", whatsapp: "+5511999990000",
     origem: "Facebook Ads", origem_tag: "paid", score: 5,
