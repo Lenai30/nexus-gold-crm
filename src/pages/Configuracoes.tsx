@@ -78,6 +78,7 @@ export default function Configuracoes() {
 
   const webhookUrl = `${SUPABASE_URL}/functions/v1/webhook-lead?token=${settings.webhook_token}`;
   const lookupUrl = `${SUPABASE_URL}/functions/v1/lead-lookup?token=${settings.webhook_token}&whatsapp={{ $json.body.data.key.remoteJid.split('@')[0] }}&campaign_id={{ $json.body.data.campaign_id || '' }}`;
+  const updateUrl = `${SUPABASE_URL}/functions/v1/lead-update?token=${settings.webhook_token}`;
   const samplePayload = JSON.stringify({
     nome: "João Silva", whatsapp: "+5511999990000",
     origem: "Facebook Ads", origem_tag: "paid", score: 5,
@@ -361,6 +362,73 @@ export default function Configuracoes() {
             </div>
           </div>
         </section>
+
+        {/* Mover Lead (lead-update) — ferramenta do agente n8n */}
+        <section className="bg-card/90 border border-border rounded-2xl p-6 shadow-sm hover:border-gold/30 transition-colors">
+          <h2 className="font-display text-lg font-semibold flex items-center gap-2 mb-1">
+            <Link2 className="w-5 h-5 text-gold" />Mover Lead no CRM (Tool do Agente)
+          </h2>
+          <p className="text-xs text-muted-foreground mb-4">
+            Use esta URL como <span className="font-mono">Tool / HTTP Request</span> do agente no n8n para que ele mova o card do lead entre as colunas do CRM (ex: novo → negociação quando o cliente demonstrar interesse). Esta URL é exclusiva da sua conta.
+          </p>
+
+          <div className="space-y-3">
+            <div>
+              <Label>URL completa (com token desta conta)</Label>
+              <div className="flex gap-2">
+                <Input readOnly value={updateUrl} className="font-mono text-[11px]" />
+                <Button variant="outline" onClick={() => { navigator.clipboard.writeText(updateUrl); toast.success("URL copiada"); }}>
+                  <Copy className="w-4 h-4" />
+                </Button>
+              </div>
+              <p className="text-[11px] text-muted-foreground mt-1">
+                Método: <span className="font-mono">POST</span> · Content-Type: <span className="font-mono">application/json</span>
+              </p>
+            </div>
+
+            <div className="rounded-lg border border-border bg-muted/30 p-4">
+              <p className="text-xs font-semibold mb-2">Configuração do nó HTTP Request no n8n</p>
+              <ul className="text-xs text-muted-foreground space-y-1.5 list-disc pl-5">
+                <li><b>Method:</b> <span className="font-mono">POST</span></li>
+                <li><b>URL:</b> <span className="font-mono break-all">{SUPABASE_URL}/functions/v1/lead-update?token={settings.webhook_token}</span></li>
+                <li><b>Authentication:</b> None</li>
+                <li><b>Send Headers:</b> ativado → <span className="font-mono">Content-Type: application/json</span></li>
+                <li><b>Send Body:</b> ativado → <span className="font-mono">JSON</span> (Using JSON)</li>
+              </ul>
+            </div>
+
+            <div className="rounded-lg border border-border bg-muted/30 p-4">
+              <p className="text-xs font-semibold mb-2">Body (JSON) — exemplo para mover para Negociação</p>
+              <pre className="text-[11px] font-mono overflow-x-auto">{`{
+  "whatsapp": "{{ $json.body.data.key.remoteJid.split('@')[0] }}",
+  "status": "negociacao"
+}`}</pre>
+            </div>
+
+            <div className="rounded-lg border border-border bg-muted/30 p-4">
+              <p className="text-xs font-semibold mb-2">Status válidos (campo <span className="font-mono">status</span>)</p>
+              <ul className="text-xs text-muted-foreground space-y-1 list-disc pl-5">
+                <li><b>novos</b> → Coluna Novos</li>
+                <li><b>negociacao</b> → Em Negociação (libera o card para atendimento humano)</li>
+                <li><b>followup</b> → Follow-up</li>
+                <li><b>posvenda</b> → Pós-Venda (vira cliente, vai para o Agente de Suporte)</li>
+              </ul>
+              <p className="text-[11px] text-muted-foreground mt-2">
+                Campos opcionais no body: <span className="font-mono">notas</span> (texto), <span className="font-mono">prox_acao</span> (data ISO), <span className="font-mono">score</span> (1 a 5).
+              </p>
+            </div>
+
+            <div className="rounded-lg border border-border bg-muted/30 p-4">
+              <p className="text-xs font-semibold mb-2">Resposta</p>
+              <pre className="text-[11px] font-mono overflow-x-auto">{`{
+  "success": true,
+  "previous_status": "novos",
+  "lead": { "id": "...", "status": "negociacao", ... }
+}`}</pre>
+            </div>
+          </div>
+        </section>
+
 
         {/* Webhook entrada de leads */}
         <section className="bg-card/90 border border-border rounded-2xl p-6 shadow-sm hover:border-gold/30 transition-colors">
