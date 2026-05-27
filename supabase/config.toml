@@ -8,3 +8,6 @@ verify_jwt = false
 
 [functions.lead-lookup]
 verify_jwt = false
+
+[functions.lead-update]
+verify_jwt = false
