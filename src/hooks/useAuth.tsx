@@ -41,13 +41,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     });
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setLoading(false);
-      if (session?.user) {
-        checkAdmin(session.user.id);
-      }
-    });
+    supabase.auth.getSession()
+      .then(async ({ data: { session }, error }) => {
+        if (error) {
+          // Sessão local corrompida/expirada: limpa e volta ao login sem travar a tela
+          try { await supabase.auth.signOut({ scope: "local" }); } catch { /* ignore */ }
+          setSession(null);
+          setLoading(false);
+          return;
+        }
+        setSession(session);
+        setLoading(false);
+        if (session?.user) {
+          checkAdmin(session.user.id);
+        }
+      })
+      .catch(async () => {
+        try { await supabase.auth.signOut({ scope: "local" }); } catch { /* ignore */ }
+        setSession(null);
+        setLoading(false);
+      });
+
 
     return () => subscription.unsubscribe();
   }, []);
